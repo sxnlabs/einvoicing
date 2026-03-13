@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "date"
-
 module Einvoicing
   module Formats
     # Generates UBL 2.1 XML compliant with EN 16931 / Peppol BIS Billing 3.0.
@@ -184,7 +182,7 @@ module Einvoicing
 
       def self.format_quantity(value)
         v = value.to_f
-        v == v.ceil ? v.to_i.to_s : format("%.4f", v)
+        v % 1 == 0 ? v.to_i.to_s : format("%.4f", v)
       end
       private_class_method :format_quantity
     end

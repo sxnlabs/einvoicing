@@ -10,14 +10,22 @@ module Einvoicing
     end
 
     # Build a non-empty element with an optional block for children.
+    # If the block yields no content, the element is omitted entirely.
     def tag(name, attrs = {}, &block)
       attr_str = serialize_attrs(attrs)
       if block
-        @parts << "#{indent}<#{name}#{attr_str}>"
+        opening = "#{indent}<#{name}#{attr_str}>"
+        @parts << opening
+        size_before = @parts.size
         @depth += 1
         yield
         @depth -= 1
-        @parts << "#{indent}</#{name}>"
+        if @parts.size == size_before
+          # Block yielded nothing — remove the opening tag.
+          @parts.pop
+        else
+          @parts << "#{indent}</#{name}>"
+        end
       else
         @parts << "#{indent}<#{name}#{attr_str}/>"
       end
@@ -47,6 +55,7 @@ module Einvoicing
         .gsub("<", "&lt;")
         .gsub(">", "&gt;")
         .gsub('"', "&quot;")
+        .gsub("'", "&apos;")
     end
 
     def serialize_attrs(attrs)

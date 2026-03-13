@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "date"
-
 module Einvoicing
   module Formats
     # Generates CII D16B (Cross Industry Invoice) XML compliant with EN 16931
@@ -106,13 +104,10 @@ module Einvoicing
 
       def self.header_trade_agreement(b, invoice)
         b.tag("ram:ApplicableHeaderTradeAgreement") do
+          # BuyerReference must be first in the sequence (EN 16931 BR-10 / XSD order).
+          b.text("ram:BuyerReference", invoice.payment_reference || "")
           b.tag("ram:SellerTradeParty") { party_xml(b, invoice.seller) }
           b.tag("ram:BuyerTradeParty")  { party_xml(b, invoice.buyer) }
-          if invoice.payment_reference
-            b.tag("ram:BuyerOrderReferencedDocument") do
-              b.text("ram:IssuerAssignedID", invoice.payment_reference)
-            end
-          end
         end
       end
       private_class_method :header_trade_agreement
@@ -192,7 +187,7 @@ module Einvoicing
 
       def self.format_quantity(value)
         v = value.to_f
-        v == v.ceil ? v.to_i.to_s : format("%.4f", v)
+        v % 1 == 0 ? v.to_i.to_s : format("%.4f", v)
       end
       private_class_method :format_quantity
     end

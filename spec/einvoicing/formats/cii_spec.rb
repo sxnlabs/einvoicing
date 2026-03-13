@@ -93,9 +93,9 @@ RSpec.describe Einvoicing::Formats::CII do
     let(:invoice) { Fixtures.invoice(lines: lines) }
 
     it "generates two ApplicableTradeTax entries in settlement" do
-      count = xml.scan("ram:ApplicableTradeTax").length / 2 # open+close tags
-      # Each line has an ApplicableTradeTax + two in settlement = 4 total sections
-      expect(xml).to include("RateApplicablePercent")
+      # 2 line-level + 2 settlement-level = 4 ApplicableTradeTax blocks total
+      count = xml.scan("<ram:ApplicableTradeTax>").length
+      expect(count).to eq(4)
     end
   end
 end

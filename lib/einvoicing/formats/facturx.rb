@@ -21,6 +21,7 @@ module Einvoicing
       FX_NAMESPACE     = "urn:factur-x:pdfa:CrossIndustryDocument:invoice:1p0#"
       FX_PREFIX        = "fx"
       MIME_TYPE        = "text/xml"
+      DATA_DIR         = File.expand_path("../../data", __dir__)
 
       # Embed CII XML into a PDF binary and return the Factur-X PDF binary.
       #
@@ -29,6 +30,10 @@ module Einvoicing
       # @param profile [String] Factur-X profile label (default: "EN 16931")
       # @return [String] binary Factur-X PDF/A-3 content
       def self.embed(pdf_data, xml_string, profile: CONFORMANCE)
+        unless pdf_data.to_s.b.start_with?("%PDF-")
+          raise ArgumentError, "pdf_data does not appear to be a valid PDF (missing %PDF- magic bytes)"
+        end
+
         require "hexapdf"
 
         io  = StringIO.new(pdf_data.dup.force_encoding("BINARY"))
@@ -63,10 +68,13 @@ module Einvoicing
         # 3. Set AF array on the catalog.
         doc.catalog[:AF] = [filespec]
 
-        # 4. Update XMP metadata.
+        # 4. Add OutputIntent (required for PDF/A-3 conformance).
+        add_output_intent(doc)
+
+        # 5. Update XMP metadata.
         update_xmp(doc, profile)
 
-        # 5. Write back to binary string.
+        # 6. Write back to binary string.
         out = StringIO.new("".b)
         doc.write(out)
         out.string
@@ -150,6 +158,29 @@ module Einvoicing
         XMP
       end
       # rubocop:enable Metrics/MethodLength
+
+      private_class_method def self.add_output_intent(doc)
+        icc_path = File.join(DATA_DIR, "srgb.icc")
+        icc_data = File.binread(icc_path)
+
+        icc_stream = doc.add({
+          Type:      :ICCBased,
+          N:         3,
+          Alternate: :DeviceRGB
+        })
+        icc_stream.set_filter(:FlateDecode)
+        icc_stream.stream = icc_data
+
+        output_intent = doc.add({
+          Type:                      :OutputIntent,
+          S:                         :GTS_PDFA1,
+          OutputConditionIdentifier: "sRGB IEC61966-2.1",
+          Info:                      "sRGB IEC61966-2.1",
+          DestOutputProfile:         icc_stream
+        })
+
+        doc.catalog[:OutputIntents] = [output_intent]
+      end
 
       private_class_method def self.md5(bytes)
         require "digest"

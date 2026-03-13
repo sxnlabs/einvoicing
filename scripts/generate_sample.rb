@@ -19,9 +19,9 @@ seller = Einvoicing::Party.new(
   city:         "Guipavas",
   postal_code:  "29490",
   country_code: "FR",
-  siren:        "123456789",
-  siret:        "12345678900012",
-  vat_number:   "FR51123456789",
+  siren:        "356000000",        # La Poste — known-valid Luhn SIREN
+  siret:        "35600000000048",   # La Poste — known-valid Luhn SIRET
+  vat_number:   "FR83356000000",
   email:        "facturation@sxnlabs.com"
 )
 
@@ -31,9 +31,9 @@ buyer = Einvoicing::Party.new(
   city:         "Paris",
   postal_code:  "75001",
   country_code: "FR",
-  siren:        "987654321",
-  siret:        "98765432100019",
-  vat_number:   "FR42987654321"
+  siren:        "552032534",        # SNCF — known-valid Luhn SIREN
+  siret:        "55203253400010",
+  vat_number:   "FR83552032534"
 )
 
 lines = [

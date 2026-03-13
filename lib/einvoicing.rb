@@ -1,5 +1,9 @@
 # frozen_string_literal: true
 
+require "date"
+require "bigdecimal"
+require "bigdecimal/util"
+
 require_relative "einvoicing/version"
 require_relative "einvoicing/tax"
 require_relative "einvoicing/party"
@@ -12,6 +16,7 @@ require_relative "einvoicing/formats/facturx"
 require_relative "einvoicing/i18n"
 require_relative "einvoicing/validators/base"
 require_relative "einvoicing/validators/fr"
+require_relative "einvoicing/invoiceable"
 require_relative "einvoicing/rails/concern"
 
 # Optional Rails engine — only load when Rails is available.

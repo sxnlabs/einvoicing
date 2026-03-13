@@ -12,8 +12,6 @@ module Einvoicing
     #
     #   Einvoicing::Validators::FR.validate!(invoice) # raises on failure
     module FR
-      include Base
-
       SIREN_RE  = /\A\d{9}\z/
       SIRET_RE  = /\A\d{14}\z/
       # FR VAT: "FR" + 2 alphanumeric chars + 9-digit SIREN

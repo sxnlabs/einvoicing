@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-require "date"
+require "bigdecimal"
+require "bigdecimal/util"
 
 module Einvoicing
   # Core invoice model. All monetary values are in the invoice currency.
@@ -49,17 +50,18 @@ module Einvoicing
 
     # Sum of all line net amounts (excl. VAT).
     def net_total
-      lines.sum(&:net_amount).round(2)
+      lines.sum(BigDecimal("0"), &:net_amount).round(2, :half_up)
     end
 
     # Total VAT across all lines.
     def tax_total
-      tax_breakdown.sum(&:tax_amount).round(2)
+      tax_breakdown.sum(BigDecimal("0"), &:tax_amount).round(2, :half_up)
     end
 
-    # Grand total including VAT.
+    # Grand total including VAT — computed from per-line gross amounts to avoid
+    # double-rounding through already-rounded net_total/tax_total (EN 16931 BR-CO-13).
     def gross_total
-      (net_total + tax_total).round(2)
+      lines.sum(BigDecimal("0"), &:gross_amount).round(2, :half_up)
     end
 
     # Amount due (same as gross_total; override for prepayments).
@@ -70,11 +72,11 @@ module Einvoicing
     private
 
     def compute_tax_breakdown(lines)
-      grouped = lines.group_by(&:vat_rate)
-      grouped.map do |rate, rate_lines|
-        taxable = rate_lines.sum(&:net_amount).round(2)
-        tax_amt = rate_lines.sum(&:vat_amount).round(2)
-        Tax.new(rate: rate, taxable_amount: taxable, tax_amount: tax_amt)
+      grouped = lines.group_by { |l| [l.vat_rate, l.category] }
+      grouped.map do |(rate, category), rate_lines|
+        taxable = rate_lines.sum(BigDecimal("0"), &:net_amount).round(2, :half_up)
+        tax_amt = rate_lines.sum(BigDecimal("0"), &:vat_amount).round(2, :half_up)
+        Tax.new(rate: rate, taxable_amount: taxable, tax_amount: tax_amt, category: category)
       end
     end
   end

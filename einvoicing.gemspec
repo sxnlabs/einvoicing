@@ -17,7 +17,8 @@ Gem::Specification.new do |s|
 
   s.required_ruby_version = ">= 3.2"
 
-  s.files = Dir["lib/**/*.rb", "README.md", "CHANGELOG.md", "LICENSE"]
+  s.files = Dir["lib/**/*.rb", "lib/**/*.xsd", "lib/**/*.xml", "lib/**/*.icc", "config/locales/*.yml",
+                "README.md", "CHANGELOG.md", "LICENSE"]
 
   # Runtime dependency: PDF/A-3 embedding only.
   s.add_dependency "hexapdf", "~> 1.0"
@@ -25,7 +26,7 @@ Gem::Specification.new do |s|
   # Dev/test dependencies.
   s.add_development_dependency "rspec",   "~> 3.13"
   s.add_development_dependency "rubocop", "~> 1.65"
-  s.add_development_dependency "nokogiri" # XSD validation in specs
+  s.add_development_dependency "nokogiri", "~> 1.16" # XSD validation in specs
   s.add_development_dependency "rexml"    # Bundled gem in Ruby 4.0+
   s.add_development_dependency "prawn"    # PDF generation in sample scripts
 end
