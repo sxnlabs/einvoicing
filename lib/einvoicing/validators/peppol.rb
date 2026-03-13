@@ -119,13 +119,17 @@ module Einvoicing
 
         doc    = REXML::Document.new(svrl_xml)
         errors = []
+        ns     = { "svrl" => "http://purl.oclc.org/dsdl/svrl" }
 
-        REXML::XPath.each(doc, "//svrl:failed-assert",
-                          "svrl" => "http://purl.oclc.org/dsdl/svrl") do |node|
+        REXML::XPath.each(doc, "//svrl:failed-assert", ns) do |node|
+          # Message is in <svrl:text> child, not in node.text directly
+          text_el = node.elements["svrl:text"]
+          message = text_el ? text_el.text.to_s.strip : node.text.to_s.strip
+
           errors << {
             field:   node.attributes["id"] || node.attributes["location"] || "",
             error:   node.attributes["test"] || "",
-            message: node.text.to_s.strip
+            message: message
           }
         end
 

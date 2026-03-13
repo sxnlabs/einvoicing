@@ -60,6 +60,7 @@ module Einvoicing
       def self.supplier_party(b, party)
         b.tag("cac:AccountingSupplierParty") do
           b.tag("cac:Party") do
+            endpoint_id(b, party)
             party_name(b, party)
             postal_address(b, party)
             tax_scheme(b, party)
@@ -72,6 +73,7 @@ module Einvoicing
       def self.customer_party(b, party)
         b.tag("cac:AccountingCustomerParty") do
           b.tag("cac:Party") do
+            endpoint_id(b, party)
             party_name(b, party)
             postal_address(b, party)
             tax_scheme(b, party)
@@ -80,6 +82,16 @@ module Einvoicing
         end
       end
       private_class_method :customer_party
+
+      # Peppol BIS 3.0 requires EndpointID for both seller and buyer (R010/R020).
+      # Falls back to email with scheme "EM" if no explicit endpoint_id set.
+      def self.endpoint_id(b, party)
+        return unless party.endpoint_id
+
+        b.text("cbc:EndpointID", party.endpoint_id,
+               "schemeID" => party.endpoint_scheme || "EM")
+      end
+      private_class_method :endpoint_id
 
       def self.party_name(b, party)
         b.tag("cac:PartyName") do
