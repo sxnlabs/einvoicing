@@ -37,7 +37,7 @@ seller = Einvoicing::Party.new(
   siren:        "898208145",
   siret:        "89820814500018",
   vat_number:   "FR46898208145",
-  email:        "facturation@sxnlabs.com"
+  email:        "contact@sxnlabs.com"
 )
 
 buyer = Einvoicing::Party.new(
