@@ -32,7 +32,7 @@ module Einvoicing
         require "hexapdf"
 
         io  = StringIO.new(pdf_data.dup.force_encoding("BINARY"))
-        doc = HexaPDF::Document.open(io)
+        doc = HexaPDF::Document.new(io: io)
 
         xml_bytes = xml_string.encode("UTF-8").b
 

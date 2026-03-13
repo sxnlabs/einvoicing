@@ -27,4 +27,5 @@ Gem::Specification.new do |s|
   s.add_development_dependency "rubocop", "~> 1.65"
   s.add_development_dependency "nokogiri" # XSD validation in specs
   s.add_development_dependency "rexml"    # Bundled gem in Ruby 4.0+
+  s.add_development_dependency "prawn"    # PDF generation in sample scripts
 end
