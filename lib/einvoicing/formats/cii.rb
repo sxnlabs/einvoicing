@@ -11,7 +11,7 @@ module Einvoicing
     #   xml = Einvoicing::Formats::CII.generate(invoice)
     #   File.write("invoice.xml", xml)
     module CII
-      GUIDELINE_ID = "urn:cen.eu:en16931:2017#conformant#urn:factur-x.eu:1p0:en16931"
+      GUIDELINE_ID = "urn:cen.eu:en16931:2017"
 
       RSM_NS = "urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100"
       RAM_NS = "urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100"
@@ -130,14 +130,14 @@ module Einvoicing
           b.text("ram:CityName",     party.city)
           b.text("ram:CountryID",    party.country_code || "FR")
         end
-        if party.vat_number
-          b.tag("ram:SpecifiedTaxRegistration") do
-            b.text("ram:ID", party.vat_number, "schemeID" => "VA")
-          end
-        end
         if party.email
           b.tag("ram:URIUniversalCommunication") do
             b.text("ram:URIID", party.email, "schemeID" => "EM")
+          end
+        end
+        if party.vat_number
+          b.tag("ram:SpecifiedTaxRegistration") do
+            b.text("ram:ID", party.vat_number, "schemeID" => "VA")
           end
         end
       end

@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Ruby 3.2
+        uses: actions/setup-ruby@v1
+        with:
+          ruby-version: "3.2"
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Cache Mustang CLI jar
+        id: cache-mustang
+        uses: actions/cache@v4
+        with:
+          path: mustang-cli.jar
+          key: mustang-cli-2.22.0
+
+      - name: Download Mustang CLI
+        if: steps.cache-mustang.outputs.cache-hit != 'true'
+        run: |
+          curl -L https://github.com/ZUGFeRD/mustangproject/releases/download/core-2.22.0/Mustang-CLI-2.22.0.jar \
+            -o mustang-cli.jar
+
+      - name: Install dependencies
+        run: bundle install
+
+      - name: Run tests
+        run: bundle exec rspec
+
+      - name: Generate sample invoice
+        run: ruby scripts/generate_sample.rb
+
+      - name: Validate Factur-X PDF
+        run: |
+          OUTPUT=$(java -jar mustang-cli.jar --action validate --source /tmp/sample-invoice.pdf)
+          echo "$OUTPUT"
+          if echo "$OUTPUT" | grep -q 'status="invalid"'; then
+            echo "Factur-X validation failed"
+            exit 1
+          fi

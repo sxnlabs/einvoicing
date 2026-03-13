@@ -20,7 +20,7 @@ RSpec.describe Einvoicing::Formats::CII do
   end
 
   it "includes the EN 16931 guideline ID" do
-    expect(xml).to include("urn:cen.eu:en16931:2017#conformant#urn:factur-x.eu:1p0:en16931")
+    expect(xml).to include("urn:cen.eu:en16931:2017")
   end
 
   it "includes the invoice number" do
