@@ -29,11 +29,10 @@ module Einvoicing
         return nil unless result
 
         siege = result["siege"] || {}
-        {
-          siret:   siege["siret"],
-          name:    result["nom_complet"],
-          address: siege["adresse"]
-        }
+        siret = siege["siret"]
+        return nil if siret.nil? || siret.empty?
+
+        { siret: siret, name: result["nom_complet"], address: siege["adresse"] }
       rescue StandardError
         nil
       end
