@@ -143,6 +143,22 @@ module Einvoicing
           b.text("ram:PaymentReference", invoice.payment_reference || invoice.invoice_number)
           b.text("ram:InvoiceCurrencyCode", invoice.currency)
 
+          if invoice.payment_means_code
+            b.tag("ram:SpecifiedTradeSettlementPaymentMeans") do
+              b.text("ram:TypeCode", invoice.payment_means_code.to_s)
+              if invoice.iban
+                b.tag("ram:PayeePartyCreditorFinancialAccount") do
+                  b.text("ram:IBANID", invoice.iban)
+                end
+              end
+              if invoice.bic
+                b.tag("ram:PayeeSpecifiedCreditorFinancialInstitution") do
+                  b.text("ram:BICID", invoice.bic)
+                end
+              end
+            end
+          end
+
           invoice.tax_breakdown.each do |tax|
             b.tag("ram:ApplicableTradeTax") do
               b.text("ram:CalculatedAmount", format_amount(tax.tax_amount))

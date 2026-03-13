@@ -26,6 +26,7 @@ module Einvoicing
           header(b, invoice)
           supplier_party(b, invoice.seller)
           customer_party(b, invoice.buyer)
+          payment_means(b, invoice) if invoice.payment_means_code
           tax_total(b, invoice)
           monetary_total(b, invoice)
           invoice.lines.each_with_index do |line, idx|
@@ -168,6 +169,23 @@ module Einvoicing
         end
       end
       private_class_method :invoice_line
+
+      def self.payment_means(b, invoice)
+        b.tag("cac:PaymentMeans") do
+          b.text("cbc:PaymentMeansCode", invoice.payment_means_code.to_s)
+          if invoice.iban
+            b.tag("cac:PayeeFinancialAccount") do
+              b.text("cbc:ID", invoice.iban)
+              if invoice.bic
+                b.tag("cac:FinancialInstitutionBranch") do
+                  b.text("cbc:ID", invoice.bic)
+                end
+              end
+            end
+          end
+        end
+      end
+      private_class_method :payment_means
 
       def self.format_date(date)
         d = date.is_a?(Date) ? date : Date.parse(date.to_s)

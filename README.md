@@ -1,28 +1,32 @@
 # einvoicing
 
-EU electronic invoicing for Ruby — EN 16931, Factur-X (PDF/A-3 + CII XML), UBL 2.1, and French B2B compliance.
+[![Gem Version](https://badge.fury.io/rb/einvoicing.svg)](https://rubygems.org/gems/einvoicing)
+[![CI](https://github.com/sxnlabs/einvoicing/actions/workflows/ci.yml/badge.svg)](https://github.com/sxnlabs/einvoicing/actions)
 
-Targets the **French September 2026 e-invoicing mandate** for SMEs and micro-enterprises.
+**EN 16931 electronic invoicing for Ruby.** Generate Factur-X (PDF/A-3 + CII XML), UBL 2.1, and CII D16B invoices. Validate French B2B compliance (SIREN, SIRET, TVA). Rails-ready.
+
+## Why
+
+France mandates structured e-invoicing for all B2B transactions starting **September 2026** (Ordonnance n° 2021-1190). Every invoice between French VAT-registered companies must be issued in a structured format (Factur-X, UBL, or CII) and transmitted via the PPF or a certified PDP.
+
+This gem gives you a clean Ruby API to build compliant invoices, validate them against French rules, and produce all required output formats — without pulling in a heavy XML library.
 
 ## Features
 
-- Generate **Factur-X** invoices (PDF/A-3 with embedded CII D16B XML)
+- Generate **Factur-X** invoices (PDF/A-3b with embedded CII D16B XML)
 - Generate **UBL 2.1** XML (Peppol BIS Billing 3.0)
-- Generate **CII D16B** XML (EN 16931 compliant)
-- Validate French B2B requirements: **SIREN, SIRET** (Luhn), **TVA** format
-- Rails **`Invoiceable` concern** for ActiveRecord models
-- Minimal dependencies: only `hexapdf` for PDF/A-3 embedding; everything else is Ruby stdlib
-
-## Requirements
-
-- Ruby >= 3.2
-- `hexapdf` >= 1.0 (for Factur-X PDF embedding)
+- Generate **CII D16B** XML (EN 16931 / ZUGFeRD)
+- Validate French B2B requirements: SIREN, SIRET (Luhn), TVA format, standard VAT rates
+- Structured error reporting: `{ field:, error:, message: }` with i18n support (EN + FR)
+- Payment means: IBAN, BIC/SWIFT, UNCL4461 type codes
+- **Rails concern** (`Einvoicing::Invoiceable`) for ActiveRecord models
+- Only one runtime dependency: `hexapdf` (for PDF/A-3 embedding). XML generation uses Ruby stdlib.
 
 ## Installation
 
 ```ruby
 # Gemfile
-gem 'einvoicing'
+gem "einvoicing"
 ```
 
 ```sh
@@ -31,48 +35,69 @@ bundle install
 
 ## Quick Start
 
-### Standalone Ruby
-
 ```ruby
-require 'einvoicing'
+require "einvoicing"
+require "date"
 
 seller = Einvoicing::Party.new(
-  name:        "Acme SAS",
-  street:      "1 rue de la Paix",
-  city:        "Paris",
-  postal_code: "75001",
+  name:         "SXN Labs",
+  street:       "5 Lot Coat an Lem",
+  city:         "Plouezoc'h",
+  postal_code:  "29252",
   country_code: "FR",
-  siren:       "356000000",
-  vat_number:  "FR83356000000"
+  siren:        "898208145",
+  siret:        "89820814500018",
+  vat_number:   "FR46898208145",
+  email:        "contact@sxnlabs.com"
 )
 
 buyer = Einvoicing::Party.new(
-  name:  "Client SA",
-  siren: "552032534"
+  name:         "Gecobat",
+  street:       "12 rue du Bâtiment",
+  city:         "Paris",
+  postal_code:  "75001",
+  country_code: "FR",
+  siren:        "552032534",
+  vat_number:   "FR83552032534"
 )
 
 lines = [
   Einvoicing::LineItem.new(
-    description: "Software consulting — January 2024",
-    quantity:    10,
-    unit_price:  150.00,
-    vat_rate:    0.20   # 20%
+    description: "Développement backend — API REST (forfait)",
+    quantity:    1,
+    unit_price:  BigDecimal("2500.00"),
+    vat_rate:    0.20
+  ),
+  Einvoicing::LineItem.new(
+    description: "Intégration Factur-X",
+    quantity:    5,
+    unit_price:  BigDecimal("350.00"),
+    vat_rate:    0.20
   )
 ]
 
 invoice = Einvoicing::Invoice.new(
-  invoice_number: "INV-2024-001",
-  issue_date:     Date.new(2024, 1, 31),
-  due_date:       Date.new(2024, 2, 29),
-  seller:         seller,
-  buyer:          buyer,
-  lines:          lines
+  invoice_number:     "FAC-2024-0042",
+  issue_date:         Date.new(2024, 3, 15),
+  due_date:           Date.new(2024, 4, 15),
+  seller:             seller,
+  buyer:              buyer,
+  lines:              lines,
+  payment_reference:  "FAC-2024-0042",
+  note:               "30 jours net",
+  payment_means_code: 30,
+  iban:               "FR7630006000011234567890189",
+  bic:                "BNPAFRPP"
 )
 
-# Totals (all computed automatically)
-invoice.net_total    # => 1500.00
-invoice.tax_total    # => 300.00
-invoice.gross_total  # => 1800.00
+# Totals are computed automatically (BigDecimal, no rounding errors)
+invoice.net_total    # => 0.4000e4  (4000.00)
+invoice.tax_total    # => 0.800e3   (800.00)
+invoice.gross_total  # => 0.4800e4  (4800.00)
+
+# Validate for French compliance
+errors = Einvoicing::Validators::FR.validate(invoice)
+errors.empty? # => true
 
 # Generate CII D16B XML (Factur-X / ZUGFeRD)
 xml = Einvoicing::Formats::CII.generate(invoice)
@@ -86,25 +111,75 @@ File.write("invoice_ubl.xml", ubl)
 pdf_data   = File.binread("invoice.pdf")
 facturx    = Einvoicing::Formats::FacturX.embed(pdf_data, xml)
 File.binwrite("invoice_facturx.pdf", facturx)
+```
 
-# Validate for French compliance
+## Validation Errors
+
+Errors are returned as an array of hashes — no exceptions, no monkey-patching:
+
+```ruby
 errors = Einvoicing::Validators::FR.validate(invoice)
-errors.empty? # => true
+# => [
+#   { field: :seller_siren, error: :siren_invalid,  message: "SIREN is invalid" },
+#   { field: :invoice_number, error: :number_invalid, message: "Invoice number format is invalid" }
+# ]
+
+# Raise instead of returning
+Einvoicing::Validators::FR.validate!(invoice)
+# => raises Einvoicing::Validators::ValidationError on failure
 ```
 
-### Rails Integration
+### i18n (French messages)
+
+The gem integrates with Rails i18n automatically. For standalone Ruby, set the locale before validating:
 
 ```ruby
-# Gemfile
-gem 'einvoicing'
+require "i18n"
+I18n.load_path += Dir[File.join(__dir__, "config/locales/*.yml")]
+I18n.locale = :fr
+
+errors = Einvoicing::Validators::FR.validate(invoice)
+# => [{ field: :seller_siren, error: :siren_invalid, message: "Le numéro SIREN est invalide" }]
 ```
 
+## Formats
+
+### Factur-X (PDF/A-3 + CII)
+
+The standard French hybrid format: a valid PDF that also carries machine-readable XML inside.
+
 ```ruby
-# app/models/invoice.rb
+xml      = Einvoicing::Formats::CII.generate(invoice)
+pdf_data = File.binread("invoice.pdf")
+facturx  = Einvoicing::Formats::FacturX.embed(pdf_data, xml)
+File.binwrite("invoice_facturx.pdf", facturx)
+```
+
+The result is PDF/A-3b conformant with an embedded `factur-x.xml` file tagged as `AFRelationship: Data`.
+
+### CII D16B (XML only)
+
+```ruby
+xml = Einvoicing::Formats::CII.generate(invoice)
+```
+
+Produces a `rsm:CrossIndustryInvoice` document with guideline ID `urn:cen.eu:en16931:2017`.
+
+### UBL 2.1 (Peppol)
+
+```ruby
+ubl = Einvoicing::Formats::UBL.generate(invoice)
+```
+
+Produces a UBL 2.1 `Invoice` document with Peppol BIS Billing 3.0 customization ID.
+
+## Rails Integration
+
+Include `Einvoicing::Invoiceable` in your ActiveRecord model and implement three methods:
+
+```ruby
 class Invoice < ApplicationRecord
   include Einvoicing::Invoiceable
-
-  # Required: map your model's data to Einvoicing data objects
 
   def einvoicing_seller
     Einvoicing::Party.new(
@@ -118,10 +193,7 @@ class Invoice < ApplicationRecord
   end
 
   def einvoicing_buyer
-    Einvoicing::Party.new(
-      name:  client.name,
-      siren: client.siren
-    )
+    Einvoicing::Party.new(name: client.name, siren: client.siren)
   end
 
   def einvoicing_lines
@@ -137,72 +209,67 @@ class Invoice < ApplicationRecord
 end
 ```
 
+Then in a controller or service:
+
 ```ruby
-# Controller or service
 invoice = Invoice.find(42)
 
-# Validate before generating
-unless invoice.einvoicing_valid?
-  raise "Invalid: #{invoice.einvoicing_errors.join(', ')}"
+if invoice.einvoicing_valid?
+  cii_xml = invoice.to_cii_xml
+  ubl_xml = invoice.to_ubl_xml
+
+  pdf_data    = invoice.pdf_attachment.download
+  facturx_pdf = invoice.to_facturx(pdf_data)
+else
+  puts invoice.einvoicing_errors.map { |e| e[:message] }
 end
-
-# Generate formats
-cii_xml = invoice.to_cii_xml
-ubl_xml = invoice.to_ubl_xml
-
-# Embed into PDF (e.g. from ActiveStorage or Prawn)
-pdf_data    = invoice.pdf_attachment.download
-facturx_pdf = invoice.to_facturx(pdf_data)
 ```
 
-## French Compliance
+### Custom validator
 
-The `Einvoicing::Validators::FR` module validates:
-
-| Check | Rule |
-|-------|------|
-| Invoice number | 1–35 alphanumeric/dash/slash chars |
-| SIREN | 9 digits, Luhn checksum |
-| SIRET | 14 digits, Luhn checksum |
-| TVA number | `FR` + 2 alphanumeric chars + 9-digit SIREN |
-| VAT rates | 0%, 5.5%, 10%, or 20% (standard French rates) |
-| Line items | At least one, with description and positive quantity |
+Use a different validator (e.g. for a non-French context):
 
 ```ruby
-errors = Einvoicing::Validators::FR.validate(invoice)   # => []
-Einvoicing::Validators::FR.validate!(invoice)           # raises ValidationError on failure
-
-Einvoicing::Validators::FR.valid_siren?("356000000")    # => true
-Einvoicing::Validators::FR.valid_siret?("35600000000048") # => true
-Einvoicing::Validators::FR.valid_vat_number?("FR83356000000") # => true
+class Invoice < ApplicationRecord
+  include Einvoicing::Invoiceable
+  self.einvoicing_validator = Einvoicing::Validators::FR  # default; swap for your own
+end
 ```
 
-## Supported Profiles
+A custom validator is any module that responds to `.validate(invoice)` and returns `Array<Hash>`.
 
-| Profile | Format | Standard |
-|---------|--------|----------|
-| Factur-X EN16931 | PDF/A-3 + CII D16B | EN 16931 |
-| Peppol BIS Billing 3.0 | UBL 2.1 | EN 16931 |
-| CII D16B | XML | EN 16931 |
+## Payment Means
 
-## Roadmap
+Add IBAN, BIC, and UNCL4461 payment type code to the invoice. Both CII and UBL generators emit the appropriate elements automatically.
 
-- **v0.1** (now) — Core data model, CII/UBL generators, Factur-X embedding, FR validators
-- **v0.2** — PPF/PDP transmission via PISTE OAuth2, invoice lifecycle tracking
-- **v0.3** — Peppol access point integration, DE/XRechnung support
-- **v0.4** — Rails generators (install, migration), full test against official XSD schemas
+```ruby
+invoice = Einvoicing::Invoice.new(
+  # ... other fields ...
+  payment_means_code: 30,               # UNCL4461: 30 = credit transfer
+  iban:               "FR7630006000011234567890189",
+  bic:                "BNPAFRPP"
+)
+```
 
-## Regulatory Context
+Common `payment_means_code` values (UNCL4461):
 
-French e-invoicing becomes mandatory for SMEs and micro-enterprises in **September 2026** (Ordonnance n° 2021-1190). All invoices between French VAT-registered companies must be:
-1. Issued in a structured format (Factur-X, UBL, or CII)
-2. Transmitted via the PPF (Portail Public de Facturation) or a certified PDP
+| Code | Meaning |
+|------|---------|
+| 30   | Credit transfer |
+| 42   | Payment to bank account |
+| 58   | SEPA credit transfer |
+
+## Requirements
+
+- **Ruby >= 3.2** (uses `Data.define`)
+- **hexapdf ~> 1.0** (runtime, for Factur-X PDF/A-3 embedding)
+- **Java** (optional) — for local validation with the Mustang CLI validator
 
 ## Contributing
 
-1. Fork the repo
+1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/my-feature`)
-3. Write tests first
+3. Write tests first (`bundle exec rspec`)
 4. Submit a pull request
 
 ## License

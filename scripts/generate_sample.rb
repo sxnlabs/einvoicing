@@ -73,15 +73,18 @@ lines = [
 ]
 
 invoice = Einvoicing::Invoice.new(
-  invoice_number:    "FAC-2024-0042",
-  issue_date:        Date.new(2024, 3, 15),
-  due_date:          Date.new(2024, 4, 15),
-  currency:          "EUR",
-  seller:            seller,
-  buyer:             buyer,
-  lines:             lines,
-  payment_reference: "FAC-2024-0042",
-  note:              "Conditions de paiement : 30 jours net"
+  invoice_number:     "FAC-2024-0042",
+  issue_date:         Date.new(2024, 3, 15),
+  due_date:           Date.new(2024, 4, 15),
+  currency:           "EUR",
+  seller:             seller,
+  buyer:              buyer,
+  lines:              lines,
+  payment_reference:  "FAC-2024-0042",
+  note:               "Conditions de paiement : 30 jours net",
+  payment_means_code: 30,
+  iban:               "FR7630006000011234567890189",
+  bic:                "BNPAFRPP"
 )
 
 # ── Generate CII XML ──────────────────────────────────────────────────────────

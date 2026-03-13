@@ -83,6 +83,58 @@ RSpec.describe Einvoicing::Formats::CII do
     expect(doc.root.name).to eq("CrossIndustryInvoice")
   end
 
+  context "with payment means" do
+    let(:invoice) do
+      Einvoicing::Invoice.new(
+        invoice_number:     "INV-2024-001",
+        issue_date:         Date.new(2024, 1, 15),
+        due_date:           Date.new(2024, 2, 15),
+        seller:             Fixtures.seller,
+        buyer:              Fixtures.buyer,
+        lines:              [Fixtures.line],
+        payment_means_code: 30,
+        iban:               "FR7630006000011234567890189",
+        bic:                "BNPAFRPP"
+      )
+    end
+
+    it "includes SpecifiedTradeSettlementPaymentMeans element" do
+      expect(xml).to include("ram:SpecifiedTradeSettlementPaymentMeans")
+    end
+
+    it "includes TypeCode 30" do
+      expect(xml).to include("<ram:TypeCode>30</ram:TypeCode>")
+    end
+
+    it "includes IBAN" do
+      expect(xml).to include("FR7630006000011234567890189")
+    end
+
+    it "includes BIC" do
+      expect(xml).to include("BNPAFRPP")
+    end
+
+    it "omits BIC element when bic is nil" do
+      inv_no_bic = Einvoicing::Invoice.new(
+        invoice_number:     "INV-2024-001",
+        issue_date:         Date.new(2024, 1, 15),
+        seller:             Fixtures.seller,
+        buyer:              Fixtures.buyer,
+        lines:              [Fixtures.line],
+        payment_means_code: 30,
+        iban:               "FR7630006000011234567890189"
+      )
+      xml_no_bic = described_class.generate(inv_no_bic)
+      expect(xml_no_bic).not_to include("ram:BICID")
+    end
+  end
+
+  context "without payment means" do
+    it "omits SpecifiedTradeSettlementPaymentMeans entirely" do
+      expect(xml).not_to include("SpecifiedTradeSettlementPaymentMeans")
+    end
+  end
+
   context "with multiple VAT rates" do
     let(:lines) do
       [

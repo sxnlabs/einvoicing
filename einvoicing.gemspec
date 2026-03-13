@@ -17,7 +17,7 @@ Gem::Specification.new do |s|
 
   s.required_ruby_version = ">= 3.2"
 
-  s.files = Dir["lib/**/*.rb", "lib/**/*.xsd", "lib/**/*.xml", "lib/**/*.icc", "config/locales/*.yml",
+  s.files = Dir["lib/**/*.rb", "lib/**/*.icc", "config/locales/*.yml",
                 "README.md", "CHANGELOG.md", "LICENSE"]
 
   # Runtime dependency: PDF/A-3 embedding only.

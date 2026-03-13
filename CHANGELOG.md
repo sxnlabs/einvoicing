@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-03-13
+
+### Added
+- i18n error messages with English and French translations
+- Payment means support (IBAN, BIC, payment type code) in CII and UBL
+- Ruby symbol error codes in validators (`{ field:, error:, message: }`)
+- Configurable validator in Invoiceable concern (`einvoicing_validator=`)
+- ELI5 documentation in docs/eli5-e-invoicing.md
+
+### Fixed
+- PDF/A-3 conformance: bundled sRGB ICC profile for OutputIntent (Mustang PDF:valid)
+- BigDecimal arithmetic throughout (was Float — rounding errors on financial totals)
+- CII element ordering: URIUniversalCommunication before SpecifiedTaxRegistration
+- Reverse charge: category: :reverse_charge instead of sentinel -1; emits RateApplicablePercent 0
+- BuyerReference emitted in ApplicableHeaderTradeAgreement
+- Empty XML elements suppressed by XMLBuilder
+- SIREN/SIRET examples in sample script use known-valid Luhn values
+- Gemfile.lock excluded from gem package
+
+### Changed
+- Validator errors now return `Array<Hash>` with `:field`, `:error`, `:message` keys
+- All monetary amounts use BigDecimal (breaking change for Float inputs: wrap in BigDecimal())
+
 ## [0.1.0] - 2026-03-13
 
 ### Added
