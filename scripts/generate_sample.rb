@@ -30,13 +30,13 @@ XML_PATH    = "/tmp/sample-invoice.xml"
 
 seller = Einvoicing::Party.new(
   name:         "SXN Labs",
-  street:       "5 rue de Vendée",
-  city:         "Guipavas",
-  postal_code:  "29490",
+  street:       "5 Lot Coat an Lem",
+  city:         "Plouezoc'h",
+  postal_code:  "29252",
   country_code: "FR",
-  siren:        "356000000",        # La Poste — known-valid Luhn SIREN
-  siret:        "35600000000048",   # La Poste — known-valid Luhn SIRET
-  vat_number:   "FR83356000000",
+  siren:        "898208145",
+  siret:        "89820814500018",
+  vat_number:   "FR46898208145",
   email:        "facturation@sxnlabs.com"
 )
 

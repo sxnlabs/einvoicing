@@ -118,7 +118,7 @@ PLATFORMS
 DEPENDENCIES
   einvoicing!
   matrix
-  nokogiri
+  nokogiri (~> 1.16)
   prawn
   prawn-table
   pry
