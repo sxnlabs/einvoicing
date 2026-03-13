@@ -21,7 +21,7 @@ module Einvoicing
       FX_NAMESPACE     = "urn:factur-x:pdfa:CrossIndustryDocument:invoice:1p0#"
       FX_PREFIX        = "fx"
       MIME_TYPE        = "text/xml"
-      DATA_DIR         = File.expand_path("../../data", __dir__)
+      DATA_DIR         = File.expand_path("../data", __dir__)
 
       # Embed CII XML into a PDF binary and return the Factur-X PDF binary.
       #
@@ -163,13 +163,11 @@ module Einvoicing
         icc_path = File.join(DATA_DIR, "srgb.icc")
         icc_data = File.binread(icc_path)
 
-        icc_stream = doc.add({
-          Type:      :ICCBased,
-          N:         3,
-          Alternate: :DeviceRGB
-        })
+        icc_stream = doc.add(
+          { Type: :ICCBased, N: 3, Alternate: :DeviceRGB },
+          stream: icc_data
+        )
         icc_stream.set_filter(:FlateDecode)
-        icc_stream.stream = icc_data
 
         output_intent = doc.add({
           Type:                      :OutputIntent,

@@ -32,7 +32,7 @@ buyer = Einvoicing::Party.new(
   postal_code:  "75001",
   country_code: "FR",
   siren:        "552032534",        # SNCF — known-valid Luhn SIREN
-  siret:        "55203253400010",
+  siret:        "55203253400018",   # SNCF — known-valid Luhn SIRET
   vat_number:   "FR83552032534"
 )
 
