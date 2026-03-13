@@ -37,6 +37,9 @@ jobs:
           curl -L https://github.com/ZUGFeRD/mustangproject/releases/download/core-2.22.0/Mustang-CLI-2.22.0.jar \
             -o mustang-cli.jar
 
+      - name: Install system fonts
+        run: sudo apt-get install -y fonts-dejavu-core
+
       - name: Install dependencies
         run: bundle install
 

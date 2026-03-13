@@ -8,6 +8,21 @@ require "prawn"
 require "prawn/table"
 require "date"
 
+# Find embeddable TTF fonts (PDF/A-3 requires all fonts to be embedded).
+FONT_REGULAR = [
+  "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+  "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
+  "/usr/share/fonts/dejavu/DejaVuSans.ttf",
+  "/System/Library/Fonts/Supplemental/Arial.ttf"
+].find { |f| File.exist?(f) } or raise "No regular TTF font found — install fonts-dejavu-core"
+
+FONT_BOLD = [
+  "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+  "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+  "/usr/share/fonts/dejavu/DejaVuSans-Bold.ttf",
+  "/System/Library/Fonts/Supplemental/Arial Bold.ttf"
+].find { |f| File.exist?(f) } or raise "No bold TTF font found — install fonts-dejavu-core"
+
 OUTPUT_PATH = "/tmp/sample-invoice.pdf"
 XML_PATH    = "/tmp/sample-invoice.xml"
 
@@ -82,6 +97,9 @@ def money(amount)
 end
 
 pdf = Prawn::Document.new(page_size: "A4", margin: [40, 40, 40, 40]) do |d|
+  d.font_families.update("Sans" => { normal: FONT_REGULAR, bold: FONT_BOLD })
+  d.font "Sans"
+
   # Header
   d.font_size 20
   d.text "FACTURE", style: :bold, align: :center

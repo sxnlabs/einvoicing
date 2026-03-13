@@ -44,7 +44,7 @@ module Einvoicing
         # 1. Embed the XML as an embedded file stream.
         ef_stream = doc.add({
           Type:    :EmbeddedFile,
-          Subtype: :"text#2Fxml",
+          Subtype: "text/xml",
           Params:  { Size: xml_bytes.bytesize, CheckSum: md5(xml_bytes) }
         })
         ef_stream.set_filter(:FlateDecode)
@@ -77,7 +77,13 @@ module Einvoicing
         # 6. Write back to binary string.
         out = StringIO.new("".b)
         doc.write(out)
-        out.string
+        result = out.string
+
+        # PDF/A-3 requires %PDF-1.x header (PDF 2.0 is not permitted).
+        # HexaPDF preserves the source version in the written header, so
+        # patch it here if the source was PDF 2.0.
+        result.sub!(/\A%PDF-2\.\d/, "%PDF-1.7")
+        result
       end
 
       private_class_method def self.update_xmp(doc, profile)
