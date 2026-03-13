@@ -80,7 +80,7 @@ module Einvoicing
     end
 
     # Validate the invoice for French compliance.
-    # @return [Array<String>] list of error messages
+    # @return [Array<Hash>] list of error hashes ({ field:, error:, message: })
     def einvoicing_errors
       Einvoicing::Validators::FR.validate(to_einvoice)
     end

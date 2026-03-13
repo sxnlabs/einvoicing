@@ -4,7 +4,9 @@ module Einvoicing
   module Validators
     # Shared validation helpers for country-specific validators.
     # Each validator exposes a `.validate(invoice)` class method that returns
-    # an array of error message strings (empty = valid).
+    # an array of error hashes (empty = valid).
+    # Each error hash has the shape:
+    #   { field: Symbol, error: Symbol, message: String }
     module Base
       def self.included(base)
         base.extend(ClassMethods)
@@ -14,7 +16,7 @@ module Einvoicing
         # Validate an invoice and raise if any errors exist.
         def validate!(invoice)
           errors = validate(invoice)
-          raise ValidationError, errors.join("; ") unless errors.empty?
+          raise ValidationError, errors.map { |e| e[:message] }.join("; ") unless errors.empty?
 
           true
         end
@@ -33,14 +35,14 @@ module Einvoicing
         (sum % 10).zero?
       end
 
-      # Basic presence check — returns an error string or nil.
-      def self.presence(value, field_name)
-        "#{field_name} is required" if value.nil? || value.to_s.strip.empty?
+      # Presence check — returns an error hash or nil.
+      def self.presence(value, field, message)
+        { field: field, error: :blank, message: message } if value.nil? || value.to_s.strip.empty?
       end
 
-      # Format check via regex — returns error string or nil.
-      def self.format(value, field_name, pattern)
-        "#{field_name} has invalid format" unless value.to_s.match?(pattern)
+      # Format check via regex — returns an error hash or nil.
+      def self.format(value, field, pattern, message)
+        { field: field, error: :invalid, message: message } unless value.to_s.match?(pattern)
       end
     end
 

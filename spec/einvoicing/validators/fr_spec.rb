@@ -94,7 +94,7 @@ RSpec.describe Einvoicing::Validators::FR do
         lines: [Fixtures.line]
       )
       errors = described_class.validate(inv)
-      expect(errors).to include(a_string_matching(/invoice number/i))
+      expect(errors).to include(a_hash_including(field: :invoice_number, error: :blank))
     end
 
     it "reports invalid seller SIREN" do
@@ -110,7 +110,7 @@ RSpec.describe Einvoicing::Validators::FR do
         lines: [Fixtures.line]
       )
       errors = described_class.validate(inv)
-      expect(errors).to include(a_string_matching(/SIREN/))
+      expect(errors).to include(a_hash_including(field: :seller_siren, error: :invalid))
     end
 
     it "reports invalid VAT number format" do
@@ -127,7 +127,7 @@ RSpec.describe Einvoicing::Validators::FR do
         lines: [Fixtures.line]
       )
       errors = described_class.validate(inv)
-      expect(errors).to include(a_string_matching(/VAT number/))
+      expect(errors).to include(a_hash_including(field: :seller_vat_number, error: :invalid))
     end
 
     it "reports non-standard VAT rate" do
@@ -139,7 +139,7 @@ RSpec.describe Einvoicing::Validators::FR do
         lines: [Einvoicing::LineItem.new(description: "X", quantity: 1, unit_price: 100.0, vat_rate: 0.15)]
       )
       errors = described_class.validate(inv)
-      expect(errors).to include(a_string_matching(/vat_rate/i))
+      expect(errors).to include(a_hash_including(field: :line_1_vat_rate, error: :invalid))
     end
   end
 

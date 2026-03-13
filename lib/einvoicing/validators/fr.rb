@@ -21,20 +21,20 @@ module Einvoicing
       INV_NUM_RE = /\A[\w\-\/]{1,35}\z/
 
       # @param invoice [Einvoicing::Invoice]
-      # @return [Array<String>] list of error messages; empty if valid
+      # @return [Array<Hash>] list of error hashes ({ field:, error:, message: }); empty if valid
       def self.validate(invoice)
-        errors = []
-        errors += validate_invoice_fields(invoice)
-        errors += validate_party(invoice.seller, "Seller")
-        errors += validate_party(invoice.buyer,  "Buyer")
-        errors += validate_lines(invoice.lines)
-        errors
+        [
+          *validate_invoice_fields(invoice),
+          *validate_party(invoice.seller, :seller),
+          *validate_party(invoice.buyer,  :buyer),
+          *validate_lines(invoice.lines)
+        ]
       end
 
       # @raise [Einvoicing::Validators::ValidationError] if invalid
       def self.validate!(invoice)
         errors = validate(invoice)
-        raise ValidationError, errors.join("; ") unless errors.empty?
+        raise ValidationError, errors.map { |e| e[:message] }.join("; ") unless errors.empty?
 
         true
       end
@@ -74,60 +74,71 @@ module Einvoicing
       # -- Private helpers ---------------------------------------------------
 
       def self.validate_invoice_fields(invoice)
-        errors = []
-        errors << Base.presence(invoice.invoice_number, "Invoice number")
+        errors = [
+          Base.presence(invoice.invoice_number, :invoice_number, "Invoice number is required"),
+          Base.presence(invoice.issue_date,     :issue_date,     "Issue date is required"),
+          Base.presence(invoice.currency,       :currency,       "Currency is required")
+        ].compact
         unless valid_invoice_number?(invoice.invoice_number.to_s)
-          errors << "Invoice number '#{invoice.invoice_number}' is invalid (1-35 alphanumeric/dash/slash chars)"
+          errors << { field: :invoice_number, error: :invalid,
+                      message: "Invoice number '#{invoice.invoice_number}' is invalid " \
+                               "(1-35 alphanumeric/dash/slash chars)" }
         end
-        errors << Base.presence(invoice.issue_date, "Issue date")
-        errors << Base.presence(invoice.currency,   "Currency")
-        errors.compact
+        errors
       end
       private_class_method :validate_invoice_fields
 
-      def self.validate_party(party, label)
-        errors = []
-        errors << Base.presence(party&.name, "#{label} name")
+      def self.validate_party(party, role)
+        name_field = :"#{role}_name"
+        errors = [Base.presence(party&.name, name_field, "#{role.capitalize} name is required")].compact
         return errors if party.nil?
 
         siren = party.siren_number
-        if siren
-          unless valid_siren?(siren)
-            errors << "#{label} SIREN '#{siren}' is invalid (must be 9 digits with valid Luhn checksum)"
-          end
+        if siren && !valid_siren?(siren)
+          errors << { field: :"#{role}_siren", error: :invalid,
+                      message: "#{role.capitalize} SIREN '#{siren}' is invalid " \
+                               "(must be 9 digits with valid Luhn checksum)" }
         end
 
-        if party.siret
-          unless valid_siret?(party.siret)
-            errors << "#{label} SIRET '#{party.siret}' is invalid (must be 14 digits with valid Luhn checksum)"
-          end
+        if party.siret && !valid_siret?(party.siret)
+          errors << { field: :"#{role}_siret", error: :invalid,
+                      message: "#{role.capitalize} SIRET '#{party.siret}' is invalid " \
+                               "(must be 14 digits with valid Luhn checksum)" }
         end
 
-        if party.vat_number
-          unless valid_vat_number?(party.vat_number)
-            errors << "#{label} VAT number '#{party.vat_number}' is invalid (expected FR + 2 chars + 9 digits)"
-          end
+        if party.vat_number && !valid_vat_number?(party.vat_number)
+          errors << { field: :"#{role}_vat_number", error: :invalid,
+                      message: "#{role.capitalize} VAT number '#{party.vat_number}' is invalid " \
+                               "(expected FR + 2 chars + 9 digits)" }
         end
 
-        errors.compact
+        errors
       end
       private_class_method :validate_party
 
       def self.validate_lines(lines)
-        errors = []
         if lines.nil? || lines.empty?
-          errors << "Invoice must have at least one line item"
-          return errors
+          return [{ field: :lines, error: :empty, message: "Invoice must have at least one line item" }]
         end
-        lines.each_with_index do |line, idx|
-          errors << "Line #{idx + 1}: description is required" if line.description.to_s.strip.empty?
-          errors << "Line #{idx + 1}: quantity must be positive" unless line.quantity.to_f.positive?
-          errors << "Line #{idx + 1}: unit_price must be non-negative" if line.unit_price.to_f.negative?
-          unless [0.0, 0.055, 0.10, 0.20].include?(line.vat_rate.to_f.round(3))
-            errors << "Line #{idx + 1}: vat_rate #{line.vat_rate} is not a standard French rate (0, 5.5%, 10%, 20%)"
-          end
-        end
-        errors
+
+        lines.each_with_index.flat_map do |line, idx|
+          n = idx + 1
+          [
+            (if line.description.to_s.strip.empty?
+               { field: :"line_#{n}_description", error: :blank, message: "Line #{n}: description is required" }
+             end),
+            (unless line.quantity.to_f.positive?
+               { field: :"line_#{n}_quantity", error: :invalid, message: "Line #{n}: quantity must be positive" }
+             end),
+            (if line.unit_price.to_f.negative?
+               { field: :"line_#{n}_unit_price", error: :invalid, message: "Line #{n}: unit_price must be non-negative" }
+             end),
+            (unless [0.0, 0.055, 0.10, 0.20].include?(line.vat_rate.to_f.round(3))
+               { field: :"line_#{n}_vat_rate", error: :invalid,
+                 message: "Line #{n}: vat_rate #{line.vat_rate} is not a standard French rate (0, 5.5%, 10%, 20%)" }
+             end)
+          ]
+        end.compact
       end
       private_class_method :validate_lines
     end
