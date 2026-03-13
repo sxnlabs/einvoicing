@@ -75,14 +75,19 @@ module Einvoicing
 
       def self.validate_invoice_fields(invoice)
         errors = [
-          Base.presence(invoice.invoice_number, :invoice_number, "Invoice number is required"),
-          Base.presence(invoice.issue_date,     :issue_date,     "Issue date is required"),
-          Base.presence(invoice.currency,       :currency,       "Currency is required")
+          Base.presence(invoice.invoice_number, :invoice_number,
+                        Einvoicing::I18n.t("errors.invoice.number_missing"),
+                        error: :number_missing),
+          Base.presence(invoice.issue_date, :issue_date,
+                        Einvoicing::I18n.t("errors.invoice.issue_date_missing"),
+                        error: :issue_date_missing),
+          Base.presence(invoice.currency, :currency,
+                        Einvoicing::I18n.t("errors.invoice.currency_missing"),
+                        error: :currency_missing)
         ].compact
         unless valid_invoice_number?(invoice.invoice_number.to_s)
-          errors << { field: :invoice_number, error: :invalid,
-                      message: "Invoice number '#{invoice.invoice_number}' is invalid " \
-                               "(1-35 alphanumeric/dash/slash chars)" }
+          errors << { field: :invoice_number, error: :number_invalid,
+                      message: Einvoicing::I18n.t("errors.invoice.number_invalid") }
         end
         errors
       end
@@ -90,26 +95,27 @@ module Einvoicing
 
       def self.validate_party(party, role)
         name_field = :"#{role}_name"
-        errors = [Base.presence(party&.name, name_field, "#{role.capitalize} name is required")].compact
+        errors = [
+          Base.presence(party&.name, name_field,
+                        Einvoicing::I18n.t("errors.#{role}.name_missing"),
+                        error: :name_missing)
+        ].compact
         return errors if party.nil?
 
         siren = party.siren_number
         if siren && !valid_siren?(siren)
-          errors << { field: :"#{role}_siren", error: :invalid,
-                      message: "#{role.capitalize} SIREN '#{siren}' is invalid " \
-                               "(must be 9 digits with valid Luhn checksum)" }
+          errors << { field: :"#{role}_siren", error: :siren_invalid,
+                      message: Einvoicing::I18n.t("errors.#{role}.siren_invalid") }
         end
 
         if party.siret && !valid_siret?(party.siret)
-          errors << { field: :"#{role}_siret", error: :invalid,
-                      message: "#{role.capitalize} SIRET '#{party.siret}' is invalid " \
-                               "(must be 14 digits with valid Luhn checksum)" }
+          errors << { field: :"#{role}_siret", error: :siret_invalid,
+                      message: Einvoicing::I18n.t("errors.#{role}.siret_invalid") }
         end
 
         if party.vat_number && !valid_vat_number?(party.vat_number)
-          errors << { field: :"#{role}_vat_number", error: :invalid,
-                      message: "#{role.capitalize} VAT number '#{party.vat_number}' is invalid " \
-                               "(expected FR + 2 chars + 9 digits)" }
+          errors << { field: :"#{role}_vat_number", error: :vat_number_invalid,
+                      message: Einvoicing::I18n.t("errors.#{role}.vat_number_invalid") }
         end
 
         errors
@@ -118,24 +124,28 @@ module Einvoicing
 
       def self.validate_lines(lines)
         if lines.nil? || lines.empty?
-          return [{ field: :lines, error: :empty, message: "Invoice must have at least one line item" }]
+          return [{ field: :lines, error: :lines_empty,
+                    message: Einvoicing::I18n.t("errors.invoice.lines_empty") }]
         end
 
         lines.each_with_index.flat_map do |line, idx|
           n = idx + 1
           [
             (if line.description.to_s.strip.empty?
-               { field: :"line_#{n}_description", error: :blank, message: "Line #{n}: description is required" }
+               { field: :"line_#{n}_description", error: :description_missing,
+                 message: Einvoicing::I18n.t("errors.line.description_missing", index: n) }
              end),
             (unless line.quantity.to_f.positive?
-               { field: :"line_#{n}_quantity", error: :invalid, message: "Line #{n}: quantity must be positive" }
+               { field: :"line_#{n}_quantity", error: :quantity_invalid,
+                 message: Einvoicing::I18n.t("errors.line.quantity_invalid", index: n) }
              end),
             (if line.unit_price.to_f.negative?
-               { field: :"line_#{n}_unit_price", error: :invalid, message: "Line #{n}: unit_price must be non-negative" }
+               { field: :"line_#{n}_unit_price", error: :unit_price_invalid,
+                 message: Einvoicing::I18n.t("errors.line.unit_price_invalid", index: n) }
              end),
             (unless [0.0, 0.055, 0.10, 0.20].include?(line.vat_rate.to_f.round(3))
-               { field: :"line_#{n}_vat_rate", error: :invalid,
-                 message: "Line #{n}: vat_rate #{line.vat_rate} is not a standard French rate (0, 5.5%, 10%, 20%)" }
+               { field: :"line_#{n}_vat_rate", error: :vat_rate_invalid,
+                 message: Einvoicing::I18n.t("errors.line.vat_rate_invalid", index: n) }
              end)
           ]
         end.compact

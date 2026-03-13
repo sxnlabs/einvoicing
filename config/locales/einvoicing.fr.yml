@@ -1,0 +1,24 @@
+fr:
+  einvoicing:
+    errors:
+      invoice:
+        number_missing: "Le numéro de facture est requis"
+        number_invalid: "Le format du numéro de facture est invalide (1 à 35 caractères alphanumériques, tirets ou barres obliques)"
+        issue_date_missing: "La date d'émission est requise"
+        currency_missing: "La devise est requise"
+        lines_empty: "La facture doit comporter au moins une ligne"
+      seller:
+        name_missing: "Le nom du vendeur est requis"
+        siren_invalid: "Le SIREN du vendeur doit comporter 9 chiffres (vérification Luhn échouée)"
+        siret_invalid: "Le SIRET du vendeur doit comporter 14 chiffres (vérification Luhn échouée)"
+        vat_number_invalid: "Le numéro de TVA du vendeur doit être au format FR + 2 caractères + 9 chiffres"
+      buyer:
+        name_missing: "Le nom de l'acheteur est requis"
+        siren_invalid: "Le SIREN de l'acheteur doit comporter 9 chiffres (vérification Luhn échouée)"
+        siret_invalid: "Le SIRET de l'acheteur doit comporter 14 chiffres (vérification Luhn échouée)"
+        vat_number_invalid: "Le numéro de TVA de l'acheteur doit être au format FR + 2 caractères + 9 chiffres"
+      line:
+        description_missing: "Ligne %{index} : la description est requise"
+        quantity_invalid: "Ligne %{index} : la quantité doit être positive"
+        unit_price_invalid: "Ligne %{index} : le prix unitaire doit être non négatif"
+        vat_rate_invalid: "Ligne %{index} : le taux de TVA doit être un taux français standard (0%%, 5,5%%, 10%%, 20%%)"

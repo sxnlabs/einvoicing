@@ -36,8 +36,8 @@ module Einvoicing
       end
 
       # Presence check — returns an error hash or nil.
-      def self.presence(value, field, message)
-        { field: field, error: :blank, message: message } if value.nil? || value.to_s.strip.empty?
+      def self.presence(value, field, message, error: :blank)
+        { field: field, error: error, message: message } if value.nil? || value.to_s.strip.empty?
       end
 
       # Format check via regex — returns an error hash or nil.

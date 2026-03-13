@@ -1,0 +1,24 @@
+en:
+  einvoicing:
+    errors:
+      invoice:
+        number_missing: "Invoice number is required"
+        number_invalid: "Invoice number format is invalid (1-35 alphanumeric/dash/slash chars)"
+        issue_date_missing: "Issue date is required"
+        currency_missing: "Currency is required"
+        lines_empty: "Invoice must have at least one line item"
+      seller:
+        name_missing: "Seller name is required"
+        siren_invalid: "Seller SIREN must be 9 digits (Luhn check failed)"
+        siret_invalid: "Seller SIRET must be 14 digits (Luhn check failed)"
+        vat_number_invalid: "Seller VAT number must be in format FR + 2 chars + 9 digits"
+      buyer:
+        name_missing: "Buyer name is required"
+        siren_invalid: "Buyer SIREN must be 9 digits (Luhn check failed)"
+        siret_invalid: "Buyer SIRET must be 14 digits (Luhn check failed)"
+        vat_number_invalid: "Buyer VAT number must be in format FR + 2 chars + 9 digits"
+      line:
+        description_missing: "Line %{index}: description is required"
+        quantity_invalid: "Line %{index}: quantity must be positive"
+        unit_price_invalid: "Line %{index}: unit price must be non-negative"
+        vat_rate_invalid: "Line %{index}: VAT rate must be a known French rate (0%%, 5.5%%, 10%%, 20%%)"
