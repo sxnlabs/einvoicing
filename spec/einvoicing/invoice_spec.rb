@@ -31,7 +31,7 @@ RSpec.describe Einvoicing::Invoice do
     end
 
     it "computes correct amounts per rate" do
-      inv = Fixtures.invoice(lines: [Fixtures.line(vat_rate: 0.20)])
+      inv = Fixtures.invoice(lines: [ Fixtures.line(vat_rate: 0.20) ])
       tax = inv.tax_breakdown.first
       expect(tax.rate).to eq(0.20)
       expect(tax.taxable_amount).to eq(1000.00)
@@ -47,12 +47,12 @@ RSpec.describe Einvoicing::Invoice do
 
   describe Einvoicing::Party do
     it "derives siren from siret" do
-      party = Einvoicing::Party.new(name: "Test", siret: "35600000000048")
+      party = described_class.new(name: "Test", siret: "35600000000048")
       expect(party.siren_number).to eq("356000000")
     end
 
     it "prefers siren over siret-derived value" do
-      party = Einvoicing::Party.new(name: "Test", siren: "123456789", siret: "12345678900001")
+      party = described_class.new(name: "Test", siren: "123456789", siret: "12345678900001")
       expect(party.siren_number).to eq("123456789")
     end
   end
@@ -81,7 +81,7 @@ RSpec.describe Einvoicing::Invoice do
     end
 
     it "returns Z category code for zero rate" do
-      zero_line = Einvoicing::LineItem.new(description: "Exempt", quantity: 1, unit_price: 100.0, vat_rate: 0.0)
+      zero_line = described_class.new(description: "Exempt", quantity: 1, unit_price: 100.0, vat_rate: 0.0)
       expect(zero_line.tax_category_code).to eq("Z")
     end
   end

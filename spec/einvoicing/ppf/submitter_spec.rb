@@ -24,7 +24,7 @@ RSpec.describe Einvoicing::PPF::Submitter do
       issue_date:     Date.new(2024, 1, 15),
       seller:         seller,
       buyer:          buyer,
-      lines:          [line]
+      lines:          [ line ]
     )
   end
 

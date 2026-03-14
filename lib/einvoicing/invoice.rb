@@ -88,7 +88,7 @@ module Einvoicing
     private
 
     def compute_tax_breakdown(lines)
-      grouped = lines.group_by { |l| [l.vat_rate, l.category] }
+      grouped = lines.group_by { |l| [ l.vat_rate, l.category ] }
       grouped.map do |(rate, category), rate_lines|
         taxable = rate_lines.sum(BigDecimal("0"), &:net_amount).round(2, :half_up)
         tax_amt = rate_lines.sum(BigDecimal("0"), &:vat_amount).round(2, :half_up)

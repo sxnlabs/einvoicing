@@ -1,0 +1,38 @@
+plugins:
+  - rubocop-rspec
+
+inherit_gem:
+  rubocop-rails-omakase: rubocop.yml
+
+AllCops:
+  TargetRubyVersion: 3.2
+  NewCops: enable
+  Exclude:
+    - "bin/**/*"
+    - "vendor/**/*"
+
+# Gem-specific relaxations
+Metrics/MethodLength:
+  Max: 30
+Metrics/ClassLength:
+  Max: 200
+Metrics/BlockLength:
+  Exclude:
+    - "spec/**/*"
+    - "*.gemspec"
+Style/Documentation:
+  Enabled: false
+
+# RSpec: allow realistic test structures without artificial splitting
+RSpec/MultipleExpectations:
+  Enabled: false
+RSpec/ExampleLength:
+  Enabled: false
+RSpec/MultipleMemoizedHelpers:
+  Enabled: false
+RSpec/ContextWording:
+  Enabled: false
+RSpec/SpecFilePathFormat:
+  Enabled: false
+RSpec/IteratedExpectation:
+  Enabled: false

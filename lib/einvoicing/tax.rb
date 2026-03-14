@@ -11,7 +11,7 @@ module Einvoicing
     # @param tax_amount [Numeric] VAT amount for this rate
     # @param category [Symbol, nil] nil for standard/zero, :reverse_charge for AE
     def initialize(rate:, taxable_amount:, tax_amount:, category: nil)
-      raise ArgumentError, "rate must be >= 0, got #{rate}" if rate.to_f.negative?
+      raise ArgumentError, Einvoicing::I18n.t("tax.invalid_rate", rate: rate) if rate.to_f.negative?
 
       super
     end

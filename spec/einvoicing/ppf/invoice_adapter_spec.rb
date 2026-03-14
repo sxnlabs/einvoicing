@@ -33,7 +33,7 @@ RSpec.describe Einvoicing::PPF::InvoiceAdapter do
       due_date:       Date.new(2024, 2, 15),
       seller:         seller,
       buyer:          buyer,
-      lines:          [line]
+      lines:          [ line ]
     )
   end
 
@@ -153,20 +153,21 @@ RSpec.describe Einvoicing::PPF::InvoiceAdapter do
   end
 
   describe "payment mode mapping" do
+    subject(:payload) { described_class.to_chorus_payload(invoice_with_payment, id_structure_cpp: 1) }
+
     let(:invoice_with_payment) do
       Einvoicing::Invoice.new(
         invoice_number:    "INV-2024-002",
         issue_date:        Date.new(2024, 1, 15),
         seller:            seller,
         buyer:             buyer,
-        lines:             [line],
+        lines:             [ line ],
         payment_means_code: 30,
         iban:              "FR7630006000011234567890189",
         bic:               "BNPAFRPP"
       )
     end
 
-    subject(:payload) { described_class.to_chorus_payload(invoice_with_payment, id_structure_cpp: 1) }
 
     it "maps payment_means_code 30 to VIREMENT" do
       expect(payload[:modePaiement][:modePaiement]).to eq("VIREMENT")

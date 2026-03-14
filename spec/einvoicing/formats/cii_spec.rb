@@ -94,7 +94,7 @@ RSpec.describe Einvoicing::Formats::CII do
         due_date:           Date.new(2024, 2, 15),
         seller:             Fixtures.seller,
         buyer:              Fixtures.buyer,
-        lines:              [Fixtures.line],
+        lines:              [ Fixtures.line ],
         payment_means_code: 30,
         iban:               "FR7630006000011234567890189",
         bic:                "BNPAFRPP"
@@ -123,7 +123,7 @@ RSpec.describe Einvoicing::Formats::CII do
         issue_date:         Date.new(2024, 1, 15),
         seller:             Fixtures.seller,
         buyer:              Fixtures.buyer,
-        lines:              [Fixtures.line],
+        lines:              [ Fixtures.line ],
         payment_means_code: 30,
         iban:               "FR7630006000011234567890189"
       )
@@ -161,7 +161,7 @@ RSpec.describe Einvoicing::Formats::CII do
         issue_date:              Date.new(2024, 4, 1),
         seller:                  Fixtures.seller,
         buyer:                   Fixtures.buyer,
-        lines:                   [Fixtures.line],
+        lines:                   [ Fixtures.line ],
         document_type:           :credit_note,
         original_invoice_number: "FAC-2024-0042",
         original_invoice_date:   Date.new(2024, 3, 15)

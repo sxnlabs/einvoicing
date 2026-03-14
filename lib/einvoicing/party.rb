@@ -27,13 +27,13 @@ module Einvoicing
       resolved_endpoint_id = endpoint_id || siret || email
       resolved_endpoint_scheme = if endpoint_scheme
                                    endpoint_scheme
-                                 elsif endpoint_id
+      elsif endpoint_id
                                    nil  # caller must supply scheme when explicit
-                                 elsif siret
+      elsif siret
                                    "0002"  # SIRET scheme — Peppol EAS FR standard
-                                 elsif email
+      elsif email
                                    "EM"    # email fallback (not in Peppol EAS, use for non-Peppol)
-                                 end
+      end
       super(name: name, street: street, city: city, postal_code: postal_code,
             country_code: country_code, siren: siren, siret: siret,
             vat_number: vat_number, email: email,

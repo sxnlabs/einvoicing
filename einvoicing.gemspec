@@ -10,8 +10,8 @@ Gem::Specification.new do |s|
     Rails concern for ActiveRecord models. Targets French September 2026 mandate.
   DESC
 
-  s.authors  = ["Nathan Le Ray"]
-  s.email    = ["nathan@sxnlabs.com"]
+  s.authors  = [ "Nathan Le Ray" ]
+  s.email    = [ "nathan@sxnlabs.com" ]
   s.homepage = "https://www.sxnlabs.com/en/gems/einvoicing/"
   s.metadata = {
     "homepage_uri"      => "https://www.sxnlabs.com/en/gems/einvoicing/",
@@ -26,13 +26,16 @@ Gem::Specification.new do |s|
   s.files = Dir["lib/**/*.rb", "lib/**/*.icc", "lib/**/*.xslt", "config/locales/*.yml",
                 "README.md", "CHANGELOG.md", "LICENSE"]
 
-  # Runtime dependency: PDF/A-3 embedding only.
+  # Runtime dependencies.
   s.add_dependency "hexapdf", "~> 1.0"
+  s.add_dependency "i18n",    "~> 1.0"
 
   # Dev/test dependencies.
-  s.add_development_dependency "rspec",   "~> 3.13"
-  s.add_development_dependency "rubocop", "~> 1.65"
-  s.add_development_dependency "nokogiri", "~> 1.16" # XSD validation in specs
+  s.add_development_dependency "rspec",                "~> 3.13"
+  s.add_development_dependency "rubocop",              "~> 1.70"
+  s.add_development_dependency "rubocop-rails-omakase"
+  s.add_development_dependency "rubocop-rspec",        "~> 3.0"
+  s.add_development_dependency "nokogiri",             "~> 1.16" # XSD validation in specs
   s.add_development_dependency "rexml"    # Bundled gem in Ruby 4.0+
   s.add_development_dependency "prawn"    # PDF generation in sample scripts
   s.add_development_dependency "webmock", "~> 3.0"

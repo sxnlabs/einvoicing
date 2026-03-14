@@ -61,7 +61,7 @@ module Einvoicing
     case format
     when :cii then Formats::CII.generate(invoice)
     when :ubl then Formats::UBL.generate(invoice)
-    else raise ArgumentError, "Unknown format: #{format.inspect}. Use :cii or :ubl"
+    else raise ArgumentError, Einvoicing::I18n.t("formats.unknown_format", fmt: format.inspect)
     end
   end
 
@@ -81,7 +81,7 @@ module Einvoicing
   def self.validate(invoice, market: :fr)
     case market
     when :fr then Validators::FR.validate(invoice)
-    else raise ArgumentError, "Unknown market: #{market.inspect}. Use :fr"
+    else raise ArgumentError, Einvoicing::I18n.t("formats.unknown_market", market: market.inspect)
     end
   end
 
@@ -98,6 +98,6 @@ module Einvoicing
     pdf_out = pdf ? embed(pdf, xml_str) : nil
     { valid: errors.empty?, errors: errors, xml: xml_str, pdf: pdf_out }
   rescue StandardError => e
-    { valid: false, errors: [{ field: :unknown, error: :exception, message: e.message }], xml: nil, pdf: nil }
+    { valid: false, errors: [ { field: :unknown, error: :exception, message: e.message } ], xml: nil, pdf: nil }
   end
 end

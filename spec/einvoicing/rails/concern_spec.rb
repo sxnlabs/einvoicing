@@ -25,7 +25,7 @@ class FakeInvoice
   end
 
   def einvoicing_lines
-    [Fixtures.line]
+    [ Fixtures.line ]
   end
 end
 
@@ -81,7 +81,7 @@ RSpec.describe Einvoicing::Invoiceable do
         def currency       = "EUR"
         def einvoicing_seller = Fixtures.seller
         def einvoicing_buyer  = Fixtures.buyer
-        def einvoicing_lines  = [Fixtures.line]
+        def einvoicing_lines  = [ Fixtures.line ]
       end
 
       instance = custom_class.new

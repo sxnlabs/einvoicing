@@ -159,8 +159,8 @@ module Einvoicing
 
       def self.validate_lines(lines)
         if lines.nil? || lines.empty?
-          return [{ field: :lines, error: :lines_empty,
-                    message: Einvoicing::I18n.t("errors.invoice.lines_empty") }]
+          return [ { field: :lines, error: :lines_empty,
+                    message: Einvoicing::I18n.t("errors.invoice.lines_empty") } ]
         end
 
         lines.each_with_index.flat_map do |line, idx|
@@ -178,7 +178,7 @@ module Einvoicing
                { field: :"line_#{n}_unit_price", error: :unit_price_invalid,
                  message: Einvoicing::I18n.t("errors.line.unit_price_invalid", index: n) }
              end),
-            (unless [0.0, 0.055, 0.10, 0.20].include?(line.vat_rate.to_f.round(3))
+            (unless [ 0.0, 0.055, 0.10, 0.20 ].include?(line.vat_rate.to_f.round(3))
                { field: :"line_#{n}_vat_rate", error: :vat_rate_invalid,
                  message: Einvoicing::I18n.t("errors.line.vat_rate_invalid", index: n) }
              end)

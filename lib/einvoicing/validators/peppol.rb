@@ -86,18 +86,18 @@ module Einvoicing
       private_class_method :download
 
       def self.run_saxon(xml_string)
-        input  = Tempfile.new(["peppol-input",  ".xml"])
-        output = Tempfile.new(["peppol-output", ".svrl"])
+        input  = Tempfile.new([ "peppol-input",  ".xml" ])
+        output = Tempfile.new([ "peppol-output", ".svrl" ])
 
         begin
           input.write(xml_string)
           input.close
           output.close
 
-          cmd = ["java", "-jar", SAXON_JAR,
+          cmd = [ "java", "-jar", SAXON_JAR,
                  "-s:#{input.path}",
                  "-xsl:#{XSLT_PATH}",
-                 "-o:#{output.path}"]
+                 "-o:#{output.path}" ]
 
           _, stderr, status = Open3.capture3(*cmd)
 

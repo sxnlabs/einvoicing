@@ -91,7 +91,7 @@ RSpec.describe Einvoicing::Validators::FR do
         issue_date: Date.today,
         seller: Fixtures.seller,
         buyer: Fixtures.buyer,
-        lines: [Fixtures.line]
+        lines: [ Fixtures.line ]
       )
       errors = described_class.validate(inv)
       expect(errors).to include(a_hash_including(field: :invoice_number, error: :number_missing))
@@ -107,7 +107,7 @@ RSpec.describe Einvoicing::Validators::FR do
         issue_date: Date.today,
         seller: bad_seller,
         buyer: Fixtures.buyer,
-        lines: [Fixtures.line]
+        lines: [ Fixtures.line ]
       )
       errors = described_class.validate(inv)
       expect(errors).to include(a_hash_including(field: :seller_siren, error: :siren_invalid))
@@ -124,7 +124,7 @@ RSpec.describe Einvoicing::Validators::FR do
         issue_date: Date.today,
         seller: bad_seller,
         buyer: Fixtures.buyer,
-        lines: [Fixtures.line]
+        lines: [ Fixtures.line ]
       )
       errors = described_class.validate(inv)
       expect(errors).to include(a_hash_including(field: :seller_vat_number, error: :vat_number_invalid))
@@ -136,7 +136,7 @@ RSpec.describe Einvoicing::Validators::FR do
         issue_date: Date.today,
         seller: Fixtures.seller,
         buyer: Fixtures.buyer,
-        lines: [Einvoicing::LineItem.new(description: "X", quantity: 1, unit_price: 100.0, vat_rate: 0.15)]
+        lines: [ Einvoicing::LineItem.new(description: "X", quantity: 1, unit_price: 100.0, vat_rate: 0.15) ]
       )
       errors = described_class.validate(inv)
       expect(errors).to include(a_hash_including(field: :line_1_vat_rate, error: :vat_rate_invalid))
@@ -150,7 +150,7 @@ RSpec.describe Einvoicing::Validators::FR do
         issue_date: Date.today,
         seller: Fixtures.seller,
         buyer: Fixtures.buyer,
-        lines: [Fixtures.line]
+        lines: [ Fixtures.line ]
       )
       expect { described_class.validate!(inv) }
         .to raise_error(Einvoicing::Validators::ValidationError)
@@ -204,7 +204,7 @@ RSpec.describe Einvoicing::Validators::FR do
         issue_date:     Date.today,
         seller:         Fixtures.seller,
         buyer:          Fixtures.buyer,
-        lines:          [Fixtures.line],
+        lines:          [ Fixtures.line ],
         document_type:  :credit_note
       )
       errors = described_class.validate(inv)
@@ -220,7 +220,7 @@ RSpec.describe Einvoicing::Validators::FR do
         issue_date:              Date.today,
         seller:                  Fixtures.seller,
         buyer:                   Fixtures.buyer,
-        lines:                   [Fixtures.line],
+        lines:                   [ Fixtures.line ],
         document_type:           :credit_note,
         original_invoice_number: "FAC-2024-0042"
       )
@@ -236,7 +236,7 @@ RSpec.describe Einvoicing::Validators::FR do
         issue_date:     Date.today,
         seller:         Fixtures.seller,
         buyer:          Fixtures.buyer,
-        lines:          [Fixtures.line],
+        lines:          [ Fixtures.line ],
         iban:           "FR0000000000000000000000000"  # bad checksum
       )
       errors = described_class.validate(inv)
@@ -249,7 +249,7 @@ RSpec.describe Einvoicing::Validators::FR do
         issue_date:     Date.today,
         seller:         Fixtures.seller,
         buyer:          Fixtures.buyer,
-        lines:          [Fixtures.line],
+        lines:          [ Fixtures.line ],
         iban:           "FR7630006000011234567890189"
       )
       errors = described_class.validate(inv)
@@ -262,7 +262,7 @@ RSpec.describe Einvoicing::Validators::FR do
         issue_date:     Date.today,
         seller:         Fixtures.seller,
         buyer:          Fixtures.buyer,
-        lines:          [Fixtures.line],
+        lines:          [ Fixtures.line ],
         bic:            "bad"
       )
       errors = described_class.validate(inv)

@@ -25,3 +25,9 @@ fr:
         quantity_invalid: "Ligne %{index} : la quantité doit être positive"
         unit_price_invalid: "Ligne %{index} : le prix unitaire doit être non négatif"
         vat_rate_invalid: "Ligne %{index} : le taux de TVA doit être un taux français standard (0%%, 5,5%%, 10%%, 20%%)"
+    formats:
+      unknown_format: "Format inconnu : %{fmt}. Utilisez :cii ou :ubl"
+      unknown_market: "Marché inconnu : %{market}. Utilisez :fr"
+      invalid_pdf: "pdf_data ne semble pas être un PDF valide (octets magiques %PDF- manquants)"
+    tax:
+      invalid_rate: "le taux doit être >= 0, valeur reçue : %{rate}"

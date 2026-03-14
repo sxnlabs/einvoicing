@@ -5,7 +5,7 @@ module Einvoicing
   # Produces indented XML with proper attribute and text escaping.
   class XMLBuilder
     def initialize
-      @parts = ['<?xml version="1.0" encoding="UTF-8"?>']
+      @parts = [ '<?xml version="1.0" encoding="UTF-8"?>' ]
       @depth = 0
     end
 

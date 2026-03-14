@@ -31,7 +31,7 @@ module Einvoicing
       # @return [String] binary Factur-X PDF/A-3 content
       def self.embed(pdf_data, xml_string, profile: CONFORMANCE)
         unless pdf_data.to_s.b.start_with?("%PDF-")
-          raise ArgumentError, "pdf_data does not appear to be a valid PDF (missing %PDF- magic bytes)"
+          raise ArgumentError, Einvoicing::I18n.t("formats.invalid_pdf")
         end
 
         require "hexapdf"
@@ -66,7 +66,7 @@ module Einvoicing
         names_dict[:EmbeddedFiles][:Names] << FILENAME << filespec
 
         # 3. Set AF array on the catalog.
-        doc.catalog[:AF] = [filespec]
+        doc.catalog[:AF] = [ filespec ]
 
         # 4. Add OutputIntent (required for PDF/A-3 conformance).
         add_output_intent(doc)
@@ -183,7 +183,7 @@ module Einvoicing
           DestOutputProfile:         icc_stream
         })
 
-        doc.catalog[:OutputIntents] = [output_intent]
+        doc.catalog[:OutputIntents] = [ output_intent ]
       end
 
       private_class_method def self.md5(bytes)

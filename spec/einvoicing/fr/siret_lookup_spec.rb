@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require "spec_helper"
 require "webmock/rspec"
 
@@ -7,15 +8,15 @@ RSpec.describe Einvoicing::FR::SiretLookup do
 
   let(:success_body) do
     {
-      "results" => [{
+      "results" => [ {
         "nom_complet" => "SXNLABS",
         "siege" => { "siret" => "89820814500018", "adresse" => "1 RUE TEST 75001 PARIS" }
-      }]
+      } ]
     }.to_json
   end
 
   let(:empty_body) do
-    { "results" => [{ "nom_complet" => nil, "siege" => { "siret" => nil, "adresse" => nil } }] }.to_json
+    { "results" => [ { "nom_complet" => nil, "siege" => { "siret" => nil, "adresse" => nil } } ] }.to_json
   end
 
   describe ".find" do

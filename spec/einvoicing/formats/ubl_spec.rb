@@ -96,7 +96,7 @@ RSpec.describe Einvoicing::Formats::UBL do
         due_date:           Date.new(2024, 2, 15),
         seller:             Fixtures.seller,
         buyer:              Fixtures.buyer,
-        lines:              [Fixtures.line],
+        lines:              [ Fixtures.line ],
         payment_means_code: 30,
         iban:               "FR7630006000011234567890189",
         bic:                "BNPAFRPP"
@@ -126,7 +126,7 @@ RSpec.describe Einvoicing::Formats::UBL do
         issue_date:         Date.new(2024, 1, 15),
         seller:             Fixtures.seller,
         buyer:              Fixtures.buyer,
-        lines:              [Fixtures.line],
+        lines:              [ Fixtures.line ],
         payment_means_code: 30,
         iban:               "FR7630006000011234567890189"
       )
@@ -147,7 +147,7 @@ RSpec.describe Einvoicing::Formats::UBL do
       issue_date:     Date.new(2024, 1, 15),
       seller:         Fixtures.seller,
       buyer:          Fixtures.buyer,
-      lines:          [Fixtures.line]
+      lines:          [ Fixtures.line ]
     )
     xml_no_ref = described_class.generate(inv)
     expect(xml_no_ref).to include("<cbc:BuyerReference>INV-2024-001</cbc:BuyerReference>")
@@ -159,7 +159,7 @@ RSpec.describe Einvoicing::Formats::UBL do
       issue_date:     Date.new(2024, 1, 15),
       seller:         Fixtures.seller,
       buyer:          Fixtures.buyer,
-      lines:          [Fixtures.line],
+      lines:          [ Fixtures.line ],
       currency:       "USD",
       tax_currency:   "EUR"
     )
@@ -178,7 +178,7 @@ RSpec.describe Einvoicing::Formats::UBL do
         issue_date:              Date.new(2024, 4, 1),
         seller:                  Fixtures.seller,
         buyer:                   Fixtures.buyer,
-        lines:                   [Fixtures.line],
+        lines:                   [ Fixtures.line ],
         document_type:           :credit_note,
         original_invoice_number: "FAC-2024-0042",
         original_invoice_date:   Date.new(2024, 3, 15)

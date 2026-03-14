@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require "spec_helper"
 
 RSpec.describe Einvoicing::Validators::Peppol do
@@ -25,10 +26,10 @@ RSpec.describe Einvoicing::Validators::Peppol do
         city: "Paris", postal_code: "75004", country_code: "FR",
         email: "billing@client.fr"
       ),
-      lines: [Einvoicing::LineItem.new(
+      lines: [ Einvoicing::LineItem.new(
         description: "Consulting", quantity: 1,
         unit_price: BigDecimal("1000"), vat_rate: BigDecimal("0.20")
-      )]
+      ) ]
     )
   end
 
@@ -47,13 +48,13 @@ RSpec.describe Einvoicing::Validators::Peppol do
       broken_invoice = Einvoicing::Invoice.new(
         invoice_number: "ERR-001", issue_date: Date.today, currency: "EUR",
         seller: broken_party, buyer: broken_party,
-        lines: [Einvoicing::LineItem.new(description: "x", quantity: 1,
-          unit_price: BigDecimal("100"), vat_rate: BigDecimal("0.20"))]
+        lines: [ Einvoicing::LineItem.new(description: "x", quantity: 1,
+          unit_price: BigDecimal("100"), vat_rate: BigDecimal("0.20")) ]
       )
       errors = described_class.validate_ubl(Einvoicing::Formats::UBL.generate(broken_invoice))
       expect(errors).to be_an(Array)
       expect(errors).not_to be_empty
-      errors.each { |e| expect(e).to include(:field, :error, :message) }
+      expect(errors).to all(include(:field, :error, :message))
       expect(errors.map { |e| e[:message] }).to include(match(/electronic address/i))
     end
 

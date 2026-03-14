@@ -25,3 +25,9 @@ en:
         quantity_invalid: "Line %{index}: quantity must be positive"
         unit_price_invalid: "Line %{index}: unit price must be non-negative"
         vat_rate_invalid: "Line %{index}: VAT rate must be a known French rate (0%%, 5.5%%, 10%%, 20%%)"
+    formats:
+      unknown_format: "Unknown format: %{fmt}. Use :cii or :ubl"
+      unknown_market: "Unknown market: %{market}. Use :fr"
+      invalid_pdf: "pdf_data does not appear to be a valid PDF (missing %PDF- magic bytes)"
+    tax:
+      invalid_rate: "rate must be >= 0, got %{rate}"

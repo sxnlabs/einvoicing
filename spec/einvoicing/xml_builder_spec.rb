@@ -19,7 +19,7 @@ RSpec.describe Einvoicing::XMLBuilder do
     end
 
     it "skips emission entirely when block yields no content" do
-      builder.tag("empty") {}
+      builder.tag("empty") { }
       expect(xml).not_to include("<empty")
     end
 

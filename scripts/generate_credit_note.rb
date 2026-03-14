@@ -103,7 +103,7 @@ def money(amount)
   format("%.2f EUR", amount)
 end
 
-pdf = Prawn::Document.new(page_size: "A4", margin: [40, 40, 40, 40]) do |d|
+pdf = Prawn::Document.new(page_size: "A4", margin: [ 40, 40, 40, 40 ]) do |d|
   d.font_families.update("Sans" => { normal: FONT_REGULAR, bold: FONT_BOLD })
   d.font "Sans"
 
@@ -120,7 +120,7 @@ pdf = Prawn::Document.new(page_size: "A4", margin: [40, 40, 40, 40]) do |d|
 
   # Parties
   d.float do
-    d.bounding_box([0, d.cursor], width: 220) do
+    d.bounding_box([ 0, d.cursor ], width: 220) do
       d.text "ÉMETTEUR", style: :bold, size: 9
       d.text seller.name
       d.text seller.street.to_s
@@ -129,7 +129,7 @@ pdf = Prawn::Document.new(page_size: "A4", margin: [40, 40, 40, 40]) do |d|
       d.text "TVA : #{seller.vat_number}"
     end
   end
-  d.bounding_box([260, d.cursor], width: 220) do
+  d.bounding_box([ 260, d.cursor ], width: 220) do
     d.text "DESTINATAIRE", style: :bold, size: 9
     d.text buyer.name
     d.text buyer.street.to_s
@@ -140,7 +140,7 @@ pdf = Prawn::Document.new(page_size: "A4", margin: [40, 40, 40, 40]) do |d|
   d.move_down 30
 
   # Line items table
-  headers = ["Description", "Qté", "PU HT", "Total HT", "TVA"]
+  headers = [ "Description", "Qté", "PU HT", "Total HT", "TVA" ]
   rows = invoice.lines.map do |line|
     [
       line.description,
@@ -151,9 +151,9 @@ pdf = Prawn::Document.new(page_size: "A4", margin: [40, 40, 40, 40]) do |d|
     ]
   end
 
-  d.table([headers] + rows,
-          cell_style: { size: 8, padding: [4, 6, 4, 6] },
-          column_widths: [240, 30, 70, 70, 40],
+  d.table([ headers ] + rows,
+          cell_style: { size: 8, padding: [ 4, 6, 4, 6 ] },
+          column_widths: [ 240, 30, 70, 70, 40 ],
           header: true) do
     row(0).font_style = :bold
     row(0).background_color = "DDDDDD"
@@ -163,7 +163,7 @@ pdf = Prawn::Document.new(page_size: "A4", margin: [40, 40, 40, 40]) do |d|
 
   # Totals
   d.float do
-    d.bounding_box([330, d.cursor], width: 180) do
+    d.bounding_box([ 330, d.cursor ], width: 180) do
       d.text "Total HT :    #{money(invoice.net_total)}", align: :right
       d.text "TVA (20%) :   #{money(invoice.tax_total)}", align: :right
       d.text "Total TTC :   #{money(invoice.gross_total)}", align: :right, style: :bold, size: 11

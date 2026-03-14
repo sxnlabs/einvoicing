@@ -54,7 +54,7 @@ module Fixtures
     )
   end
 
-  def self.invoice(lines: [line])
+  def self.invoice(lines: [ line ])
     Einvoicing::Invoice.new(
       invoice_number:    "INV-2024-001",
       issue_date:        Date.new(2024, 1, 15),
