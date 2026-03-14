@@ -121,9 +121,12 @@ module Einvoicing
 
       def self.party_xml(b, party)
         b.text("ram:Name", party.name)
-        if party.siren_number
+        legal_id = party.siret || party.siren
+        if legal_id
           b.tag("ram:SpecifiedLegalOrganization") do
-            b.text("ram:ID", party.siren_number, "schemeID" => "0002")
+            # schemeID "SIRET" for Chorus Pro / PPF compliance (14-digit SIRET preferred)
+            scheme = party.siret ? "SIRET" : "0002"
+            b.text("ram:ID", legal_id, "schemeID" => scheme)
           end
         end
         b.tag("ram:PostalTradeAddress") do
