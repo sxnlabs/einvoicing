@@ -53,8 +53,8 @@ module Einvoicing
           end
           if invoice.document_type == :credit_note && invoice.original_invoice_number
             b.tag("ram:IncludedNote") do
-              note = "Avoir sur facture #{invoice.original_invoice_number}"
-              note += " du #{invoice.original_invoice_date.strftime('%d/%m/%Y')}" if invoice.original_invoice_date
+              note = "Credit note for invoice #{invoice.original_invoice_number}"
+              note += " dated #{invoice.original_invoice_date.strftime('%d/%m/%Y')}" if invoice.original_invoice_date
               b.text("ram:Content", note)
             end
           end

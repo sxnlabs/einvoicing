@@ -57,8 +57,8 @@ RSpec.describe Einvoicing::PPF::Submitter do
       expect(client).to have_received(:submit_invoice).with(hash_including(codeService: "SRV001"))
     end
 
-    it "passes numero_engagement to the payload when provided" do
-      submitter.submit(invoice, numero_engagement: "ENG-001")
+    it "passes engagement_number to the payload when provided" do
+      submitter.submit(invoice, engagement_number: "ENG-001")
       expect(client).to have_received(:submit_invoice).with(hash_including(numeroEngagement: "ENG-001"))
     end
 

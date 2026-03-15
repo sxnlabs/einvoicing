@@ -46,9 +46,9 @@ module Einvoicing
       end
 
       # POST /v1/soumettre/factures — submit an invoice.
-      # facture_hash: Hash matching the Chorus Pro invoice schema.
-      def submit_invoice(facture_hash)
-        post("/v1/soumettre/factures", facture_hash)
+      # invoice_hash: Hash matching the Chorus Pro invoice schema.
+      def submit_invoice(invoice_hash)
+        post("/v1/soumettre/factures", invoice_hash)
       end
 
       private

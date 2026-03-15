@@ -173,7 +173,7 @@ RSpec.describe Einvoicing::Formats::CII do
     end
 
     it "includes IncludedNote referencing original invoice" do
-      expect(xml).to include("Avoir sur facture FAC-2024-0042")
+      expect(xml).to include("Credit note for invoice FAC-2024-0042")
       expect(xml).to include("15/03/2024")
     end
 

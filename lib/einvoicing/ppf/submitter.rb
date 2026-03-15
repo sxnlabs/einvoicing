@@ -12,17 +12,17 @@ module Einvoicing
       #
       # @param invoice [Einvoicing::Invoice]
       # @param code_service [String, nil] optional service code from list_services
-      # @param numero_engagement [String, nil] optional engagement number
-      def submit(invoice, code_service: nil, numero_engagement: nil)
+      # @param engagement_number [String, nil] optional engagement number
+      def submit(invoice, code_service: nil, engagement_number: nil)
         structure    = @client.find_structure(siret: invoice.buyer.siret)
         id_structure = structure["idStructureCPP"] || structure.dig("parametres", "idStructureCPP")
         raise ValidationError, "Buyer SIRET #{invoice.buyer.siret} not found in Chorus Pro" unless id_structure
 
         payload = InvoiceAdapter.to_chorus_payload(
           invoice,
-          id_structure_cpp:  id_structure,
-          code_service:      code_service,
-          numero_engagement: numero_engagement
+          id_structure_cpp: id_structure,
+          code_service:     code_service,
+          engagement_number: engagement_number
         )
 
         @client.submit_invoice(payload)

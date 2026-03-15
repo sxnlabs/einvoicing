@@ -100,7 +100,7 @@ RSpec.describe Einvoicing::PPF::InvoiceAdapter do
           invoice,
           id_structure_cpp:  42,
           code_service:      "SRV001",
-          numero_engagement: "ENG-2024-001"
+          engagement_number: "ENG-2024-001"
         )
       end
 
@@ -108,7 +108,7 @@ RSpec.describe Einvoicing::PPF::InvoiceAdapter do
         expect(payload[:codeService]).to eq("SRV001")
       end
 
-      it "includes numero_engagement when provided" do
+      it "includes engagement_number when provided" do
         expect(payload[:numeroEngagement]).to eq("ENG-2024-001")
       end
     end

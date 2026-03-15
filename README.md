@@ -55,7 +55,7 @@ seller = Einvoicing::Party.new(
 
 buyer = Einvoicing::Party.new(
   name:         "Gecobat",
-  street:       "12 rue du Bâtiment",
+  street:       "12 Construction Street",
   city:         "Paris",
   postal_code:  "75001",
   country_code: "FR",
@@ -65,13 +65,13 @@ buyer = Einvoicing::Party.new(
 
 lines = [
   Einvoicing::LineItem.new(
-    description: "Développement backend — API REST (forfait)",
+    description: "Backend development — REST API (fixed fee)",
     quantity:    1,
     unit_price:  BigDecimal("2500.00"),
     vat_rate:    0.20
   ),
   Einvoicing::LineItem.new(
-    description: "Intégration Factur-X",
+    description: "Factur-X integration",
     quantity:    5,
     unit_price:  BigDecimal("350.00"),
     vat_rate:    0.20
@@ -86,7 +86,7 @@ invoice = Einvoicing::Invoice.new(
   buyer:              buyer,
   lines:              lines,
   payment_reference:  "FAC-2024-0042",
-  note:               "30 jours net",
+  note:               "Net 30",
   payment_means_code: 30,
   iban:               "FR7630006000011234567890189",
   bic:                "BNPAFRPP"

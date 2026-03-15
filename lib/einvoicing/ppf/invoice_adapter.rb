@@ -8,12 +8,12 @@ module Einvoicing
       # @param invoice [Einvoicing::Invoice]
       # @param id_structure_cpp [Integer] from find_structure()
       # @param code_service [String, nil] from list_services() — optional
-      # @param numero_engagement [String, nil] buyer PO/engagement number — optional for B2B
-      def self.to_chorus_payload(invoice, id_structure_cpp:, code_service: nil, numero_engagement: nil)
+      # @param engagement_number [String, nil] buyer PO/engagement number — optional for B2B
+      def self.to_chorus_payload(invoice, id_structure_cpp:, code_service: nil, engagement_number: nil)
         {
           idStructureCPP:   id_structure_cpp,
           codeService:      code_service,
-          numeroEngagement: numero_engagement,
+          numeroEngagement: engagement_number,
           cadreFacturation: {
             codeCadreFacturation: "FACTURE_FOURNISSEUR",
             codeServiceValideur:  nil
