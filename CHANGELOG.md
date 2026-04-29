@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- CII profile support: `:chorus_pro` and `:en16931` selectable per invoice
+
+### Fixed
+- CII `schemeID` SIRET correctly emitted for Chorus Pro
+- `PaymentMeans` is now required when generating CII/UBL
+
+## [0.6.0] - 2026-03-14
+
+### Changed
+- Codebase aligned on `rubocop-rails-omakase` standards
+- Locale strings extracted into `config/locales/*.yml` (English + French)
+
 ## [0.5.0] - 2026-03-14
 
 ### Fixed
