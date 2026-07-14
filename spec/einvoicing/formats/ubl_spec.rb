@@ -141,6 +141,38 @@ RSpec.describe Einvoicing::Formats::UBL do
     end
   end
 
+  context "with prepaid_amount (retenue de garantie, BT-113)" do
+    let(:invoice) do
+      Einvoicing::Invoice.new(
+        invoice_number: "INV-2024-001",
+        issue_date:     Date.new(2024, 1, 15),
+        seller:         Fixtures.seller,
+        buyer:          Fixtures.buyer,
+        lines:          [ Fixtures.line ],
+        prepaid_amount: BigDecimal("100")
+      )
+    end
+
+    it "includes cbc:PrepaidAmount immediately before cbc:PayableAmount" do
+      expect(xml).to include('<cbc:PrepaidAmount currencyID="EUR">100.00</cbc:PrepaidAmount>')
+      prepaid_index = xml.index("<cbc:PrepaidAmount")
+      payable_index  = xml.index("<cbc:PayableAmount")
+      expect(xml[prepaid_index...payable_index])
+        .to match(%r{\A<cbc:PrepaidAmount currencyID="EUR">100\.00</cbc:PrepaidAmount>\s*\z})
+    end
+
+    it "computes PayableAmount as TaxInclusiveAmount minus PrepaidAmount (BR-CO-16)" do
+      expect(xml).to include('<cbc:TaxInclusiveAmount currencyID="EUR">1200.00</cbc:TaxInclusiveAmount>')
+      expect(xml).to include('<cbc:PayableAmount currencyID="EUR">1100.00</cbc:PayableAmount>')
+    end
+  end
+
+  context "without prepaid_amount" do
+    it "omits cbc:PrepaidAmount entirely" do
+      expect(xml).not_to include("PrepaidAmount")
+    end
+  end
+
   it "always emits BuyerReference (falls back to invoice_number)" do
     inv = Einvoicing::Invoice.new(
       invoice_number: "INV-2024-001",

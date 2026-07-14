@@ -192,6 +192,7 @@ module Einvoicing
             b.text("ram:TaxTotalAmount",     format_amount(invoice.tax_total),
                    "currencyID" => invoice.currency)
             b.text("ram:GrandTotalAmount",   format_amount(invoice.gross_total))
+            b.text("ram:TotalPrepaidAmount", format_amount(invoice.prepaid_amount)) if invoice.prepaid_amount.positive?
             b.text("ram:DuePayableAmount",   format_amount(invoice.due_amount))
           end
         end

@@ -45,6 +45,43 @@ RSpec.describe Einvoicing::Invoice do
     end
   end
 
+  describe "prepaid_amount (BT-113, retenue de garantie)" do
+    it "defaults due_amount to gross_total when no prepaid amount is set" do
+      expect(invoice.prepaid_amount).to eq(BigDecimal("0"))
+      expect(invoice.due_amount).to eq(invoice.gross_total)
+    end
+
+    it "reduces due_amount without changing net_total, tax_total or gross_total" do
+      inv = described_class.new(
+        invoice_number: "INV-2024-001",
+        issue_date:     Date.new(2024, 1, 15),
+        seller:         Fixtures.seller,
+        buyer:          Fixtures.buyer,
+        lines:          [ Fixtures.line ],
+        prepaid_amount: BigDecimal("100")
+      )
+
+      expect(inv.net_total).to eq(1000.00)
+      expect(inv.tax_total).to eq(200.00)
+      expect(inv.gross_total).to eq(1200.00)
+      expect(inv.due_amount).to eq(1100.00)
+    end
+
+    it "coerces a numeric prepaid_amount to BigDecimal" do
+      inv = described_class.new(
+        invoice_number: "INV-2024-001",
+        issue_date:     Date.new(2024, 1, 15),
+        seller:         Fixtures.seller,
+        buyer:          Fixtures.buyer,
+        lines:          [ Fixtures.line ],
+        prepaid_amount: 100
+      )
+
+      expect(inv.prepaid_amount).to be_a(BigDecimal)
+      expect(inv.due_amount).to eq(1100.00)
+    end
+  end
+
   describe Einvoicing::Party do
     it "derives siren from siret" do
       party = described_class.new(name: "Test", siret: "35600000000048")

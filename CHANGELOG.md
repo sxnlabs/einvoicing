@@ -7,7 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-07-14
+
 ### Added
+- `prepaid_amount` on `Invoice` (BT-113 `TotalPrepaidAmount` in CII / `PrepaidAmount` in UBL) so a retained/prepaid amount (e.g. retenue de garantie) reduces the amount due (BR-CO-16: `DuePayableAmount = GrandTotal − TotalPrepaidAmount`) without affecting the taxable base or VAT totals
 - CII profile support: `:chorus_pro` and `:en16931` selectable per invoice
 
 ### Fixed
