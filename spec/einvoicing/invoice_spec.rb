@@ -80,6 +80,20 @@ RSpec.describe Einvoicing::Invoice do
       expect(inv.prepaid_amount).to be_a(BigDecimal)
       expect(inv.due_amount).to eq(1100.00)
     end
+
+    it "tolerates an explicit nil prepaid_amount" do
+      inv = described_class.new(
+        invoice_number: "INV-2024-001",
+        issue_date:     Date.new(2024, 1, 15),
+        seller:         Fixtures.seller,
+        buyer:          Fixtures.buyer,
+        lines:          [ Fixtures.line ],
+        prepaid_amount: nil
+      )
+
+      expect(inv.prepaid_amount).to eq(BigDecimal("0"))
+      expect(inv.due_amount).to eq(inv.gross_total)
+    end
   end
 
   describe Einvoicing::Party do

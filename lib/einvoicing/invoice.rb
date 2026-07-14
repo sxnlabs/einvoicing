@@ -63,7 +63,7 @@ module Einvoicing
         document_type: document_type,
         original_invoice_number: original_invoice_number,
         original_invoice_date: original_invoice_date,
-        prepaid_amount: BigDecimal(prepaid_amount.to_s)
+        prepaid_amount: prepaid_amount.nil? ? BigDecimal(0) : BigDecimal(prepaid_amount.to_s)
       )
     end
 

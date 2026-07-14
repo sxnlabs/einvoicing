@@ -229,6 +229,47 @@ RSpec.describe Einvoicing::Validators::FR do
     end
   end
 
+  describe "prepaid_amount validation (BT-113)" do
+    it "accepts a prepaid_amount within 0..gross_total" do
+      inv = Einvoicing::Invoice.new(
+        invoice_number: "INV-001",
+        issue_date:     Date.today,
+        seller:         Fixtures.seller,
+        buyer:          Fixtures.buyer,
+        lines:          [ Fixtures.line ],
+        prepaid_amount: BigDecimal("100")
+      )
+      errors = described_class.validate(inv)
+      expect(errors.map { |e| e[:error] }).not_to include(:prepaid_amount_negative, :prepaid_amount_exceeds_total)
+    end
+
+    it "reports a negative prepaid_amount" do
+      inv = Einvoicing::Invoice.new(
+        invoice_number: "INV-001",
+        issue_date:     Date.today,
+        seller:         Fixtures.seller,
+        buyer:          Fixtures.buyer,
+        lines:          [ Fixtures.line ],
+        prepaid_amount: BigDecimal("-1")
+      )
+      errors = described_class.validate(inv)
+      expect(errors).to include(a_hash_including(field: :prepaid_amount, error: :prepaid_amount_negative))
+    end
+
+    it "reports a prepaid_amount exceeding gross_total" do
+      inv = Einvoicing::Invoice.new(
+        invoice_number: "INV-001",
+        issue_date:     Date.today,
+        seller:         Fixtures.seller,
+        buyer:          Fixtures.buyer,
+        lines:          [ Fixtures.line ],
+        prepaid_amount: BigDecimal("99999")
+      )
+      errors = described_class.validate(inv)
+      expect(errors).to include(a_hash_including(field: :prepaid_amount, error: :prepaid_amount_exceeds_total))
+    end
+  end
+
   describe "IBAN/BIC validation" do
     it "reports invalid IBAN" do
       inv = Einvoicing::Invoice.new(
