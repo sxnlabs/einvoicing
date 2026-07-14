@@ -10,6 +10,8 @@ en:
         original_invoice_number_missing: "Original invoice number is required for credit notes"
         iban_invalid: "IBAN format or checksum is invalid"
         bic_invalid: "BIC format is invalid (8 or 11 characters)"
+        prepaid_amount_negative: "Prepaid amount cannot be negative"
+        prepaid_amount_exceeds_total: "Prepaid amount cannot exceed the invoice total"
       seller:
         name_missing: "Seller name is required"
         siren_invalid: "Seller SIREN must be 9 digits (Luhn check failed)"

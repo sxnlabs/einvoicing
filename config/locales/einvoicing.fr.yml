@@ -10,6 +10,8 @@ fr:
         original_invoice_number_missing: "Le numéro de facture d'origine est requis pour les avoirs"
         iban_invalid: "Le format ou la somme de contrôle de l'IBAN est invalide"
         bic_invalid: "Le format du BIC est invalide (8 ou 11 caractères)"
+        prepaid_amount_negative: "Le montant déjà payé ne peut pas être négatif"
+        prepaid_amount_exceeds_total: "Le montant déjà payé ne peut pas dépasser le total de la facture"
       seller:
         name_missing: "Le nom du vendeur est requis"
         siren_invalid: "Le SIREN du vendeur doit comporter 9 chiffres (vérification Luhn échouée)"

@@ -159,6 +159,10 @@ module Einvoicing
                  "currencyID" => invoice.currency)
           b.text("cbc:TaxInclusiveAmount", format_amount(invoice.gross_total),
                  "currencyID" => invoice.currency)
+          if invoice.prepaid_amount.positive?
+            b.text("cbc:PrepaidAmount", format_amount(invoice.prepaid_amount),
+                   "currencyID" => invoice.currency)
+          end
           b.text("cbc:PayableAmount", format_amount(invoice.due_amount),
                  "currencyID" => invoice.currency)
         end

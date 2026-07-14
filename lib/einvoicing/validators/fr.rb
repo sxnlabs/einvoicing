@@ -124,6 +124,13 @@ module Einvoicing
           errors << { field: :bic, error: :bic_invalid,
                       message: Einvoicing::I18n.t("errors.invoice.bic_invalid") }
         end
+        if invoice.prepaid_amount.negative?
+          errors << { field: :prepaid_amount, error: :prepaid_amount_negative,
+                      message: Einvoicing::I18n.t("errors.invoice.prepaid_amount_negative") }
+        elsif invoice.prepaid_amount > invoice.gross_total
+          errors << { field: :prepaid_amount, error: :prepaid_amount_exceeds_total,
+                      message: Einvoicing::I18n.t("errors.invoice.prepaid_amount_exceeds_total") }
+        end
         errors
       end
       private_class_method :validate_invoice_fields

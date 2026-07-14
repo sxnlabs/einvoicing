@@ -35,13 +35,15 @@ module Einvoicing
     :bic,
     :document_type,
     :original_invoice_number,
-    :original_invoice_date
+    :original_invoice_date,
+    :prepaid_amount
   ) do
     def initialize(invoice_number:, issue_date:, seller:, buyer:, lines:,
                    due_date: nil, currency: "EUR", tax_currency: nil, tax_breakdown: nil,
                    payment_reference: nil, note: nil,
                    payment_means_code: nil, iban: nil, bic: nil,
-                   document_type: :invoice, original_invoice_number: nil, original_invoice_date: nil)
+                   document_type: :invoice, original_invoice_number: nil, original_invoice_date: nil,
+                   prepaid_amount: BigDecimal(0))
       computed_breakdown = tax_breakdown || compute_tax_breakdown(lines)
       super(
         invoice_number: invoice_number,
@@ -60,7 +62,8 @@ module Einvoicing
         bic: bic,
         document_type: document_type,
         original_invoice_number: original_invoice_number,
-        original_invoice_date: original_invoice_date
+        original_invoice_date: original_invoice_date,
+        prepaid_amount: prepaid_amount.nil? ? BigDecimal(0) : BigDecimal(prepaid_amount.to_s)
       )
     end
 
@@ -80,9 +83,11 @@ module Einvoicing
       lines.sum(BigDecimal("0"), &:gross_amount).round(2, :half_up)
     end
 
-    # Amount due (same as gross_total; override for prepayments).
+    # Amount due after deducting any retained/prepaid amount (BT-113).
+    # VAT remains due on the full gross_total — only the payable balance is reduced
+    # (EN 16931 BR-CO-16: DuePayableAmount = GrandTotal − TotalPrepaidAmount).
     def due_amount
-      gross_total
+      gross_total - prepaid_amount
     end
 
     private

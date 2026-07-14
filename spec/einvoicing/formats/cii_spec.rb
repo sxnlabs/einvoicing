@@ -138,6 +138,44 @@ RSpec.describe Einvoicing::Formats::CII do
     end
   end
 
+  context "with prepaid_amount (retenue de garantie, BT-113)" do
+    let(:invoice) do
+      Einvoicing::Invoice.new(
+        invoice_number:    "INV-2024-001",
+        issue_date:        Date.new(2024, 1, 15),
+        due_date:          Date.new(2024, 2, 15),
+        seller:            Fixtures.seller,
+        buyer:             Fixtures.buyer,
+        lines:             [ Fixtures.line ],
+        payment_reference: "PO-2024-001",
+        prepaid_amount:    BigDecimal("100")
+      )
+    end
+
+    it "includes TotalPrepaidAmount immediately before DuePayableAmount" do
+      expect(xml).to include("<ram:TotalPrepaidAmount>100.00</ram:TotalPrepaidAmount>")
+      prepaid_index = xml.index("<ram:TotalPrepaidAmount>")
+      due_index      = xml.index("<ram:DuePayableAmount>")
+      expect(xml[prepaid_index...due_index]).to match(/\A<ram:TotalPrepaidAmount>100\.00<\/ram:TotalPrepaidAmount>\s*\z/)
+    end
+
+    it "computes DuePayableAmount as GrandTotal minus TotalPrepaidAmount (BR-CO-16)" do
+      expect(xml).to include("<ram:GrandTotalAmount>1200.00</ram:GrandTotalAmount>")
+      expect(xml).to include("<ram:DuePayableAmount>1100.00</ram:DuePayableAmount>")
+    end
+
+    it "generates XSD-valid CII XML with TotalPrepaidAmount present" do
+      errors = validate_against_xsd(xml, "EN16931")
+      expect(errors).to be_empty, "XSD errors: #{errors.map(&:message).join(', ')}"
+    end
+  end
+
+  context "without prepaid_amount" do
+    it "omits TotalPrepaidAmount entirely" do
+      expect(xml).not_to include("TotalPrepaidAmount")
+    end
+  end
+
   context "with multiple VAT rates" do
     let(:lines) do
       [
