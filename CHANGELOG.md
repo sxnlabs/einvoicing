@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-07-16
+
+### Fixed
+- CII credit notes now emit the preceding invoice number (BT-25) and optional issue date (BT-26) as a machine-readable EN 16931 BG-3 reference while retaining the legacy human-readable note when no explicit invoice note is provided
+
 ## [0.7.0] - 2026-07-14
 
 ### Added
@@ -91,5 +96,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Zero runtime dependencies beyond hexapdf (stdlib-only XML generation via internal builder)
 - RSpec test suite
 
-[Unreleased]: https://github.com/sxnlabs/einvoicing/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/sxnlabs/einvoicing/compare/v0.7.1...HEAD
+[0.7.1]: https://github.com/sxnlabs/einvoicing/compare/v0.7.0...v0.7.1
 [0.1.0]: https://github.com/sxnlabs/einvoicing/releases/tag/v0.1.0

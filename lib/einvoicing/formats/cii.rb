@@ -51,21 +51,25 @@ module Einvoicing
           b.tag("ram:IssueDateTime") do
             b.text("udt:DateTimeString", format_date(invoice.issue_date), "format" => "102")
           end
-          if invoice.document_type == :credit_note && invoice.original_invoice_number
+          if (note = document_note(invoice))
             b.tag("ram:IncludedNote") do
-              note = "Credit note for invoice #{invoice.original_invoice_number}"
-              note += " dated #{invoice.original_invoice_date.strftime('%d/%m/%Y')}" if invoice.original_invoice_date
               b.text("ram:Content", note)
-            end
-          end
-          if invoice.note
-            b.tag("ram:IncludedNote") do
-              b.text("ram:Content", invoice.note)
             end
           end
         end
       end
       private_class_method :exchanged_document
+
+      def self.document_note(invoice)
+        return invoice.note unless invoice.note.to_s.strip.empty?
+        return unless invoice.document_type == :credit_note
+        return if invoice.original_invoice_number.to_s.strip.empty?
+
+        note = "Credit note for invoice #{invoice.original_invoice_number}"
+        note += " dated #{format_display_date(invoice.original_invoice_date)}" if invoice.original_invoice_date
+        note
+      end
+      private_class_method :document_note
 
       def self.supply_chain_trade_transaction(b, invoice, profile)
         b.tag("rsm:SupplyChainTradeTransaction") do
@@ -195,9 +199,24 @@ module Einvoicing
             b.text("ram:TotalPrepaidAmount", format_amount(invoice.prepaid_amount)) if invoice.prepaid_amount.positive?
             b.text("ram:DuePayableAmount",   format_amount(invoice.due_amount))
           end
+
+          preceding_invoice_reference(b, invoice) if invoice.document_type == :credit_note &&
+                                                      invoice.original_invoice_number
         end
       end
       private_class_method :header_trade_settlement
+
+      def self.preceding_invoice_reference(b, invoice)
+        b.tag("ram:InvoiceReferencedDocument") do
+          b.text("ram:IssuerAssignedID", invoice.original_invoice_number)
+          if invoice.original_invoice_date
+            b.tag("ram:FormattedIssueDateTime") do
+              b.text("qdt:DateTimeString", format_date(invoice.original_invoice_date), "format" => "102")
+            end
+          end
+        end
+      end
+      private_class_method :preceding_invoice_reference
 
       # Format a Date or string as YYYYMMDD (CII date format 102).
       def self.format_date(date)
@@ -205,6 +224,12 @@ module Einvoicing
         d.strftime("%Y%m%d")
       end
       private_class_method :format_date
+
+      def self.format_display_date(date)
+        d = date.is_a?(Date) ? date : Date.parse(date.to_s)
+        d.strftime("%d/%m/%Y")
+      end
+      private_class_method :format_display_date
 
       def self.format_amount(value)
         format("%.2f", value)

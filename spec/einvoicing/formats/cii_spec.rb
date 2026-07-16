@@ -210,15 +210,122 @@ RSpec.describe Einvoicing::Formats::CII do
       expect(xml).to include("<ram:TypeCode>381</ram:TypeCode>")
     end
 
-    it "includes IncludedNote referencing original invoice" do
-      expect(xml).to include("Credit note for invoice FAC-2024-0042")
-      expect(xml).to include("15/03/2024")
+    it "emits the preceding invoice reference as EN 16931 BG-3" do
+      require "nokogiri"
+      document = Nokogiri::XML(xml)
+      namespaces = {
+        "ram" => described_class::RAM_NS,
+        "qdt" => described_class::QDT_NS
+      }
+
+      settlement = document.at_xpath(
+        "//ram:ApplicableHeaderTradeSettlement",
+        namespaces
+      )
+      reference = settlement.at_xpath("./ram:InvoiceReferencedDocument", namespaces)
+
+      expect(reference.at_xpath("./ram:IssuerAssignedID", namespaces).text).to eq("FAC-2024-0042")
+      date = reference.at_xpath("./ram:FormattedIssueDateTime/qdt:DateTimeString", namespaces)
+      expect(date.text).to eq("20240315")
+      expect(date["format"]).to eq("102")
+    end
+
+    it "preserves the legacy human-readable reference note" do
+      require "nokogiri"
+      document = Nokogiri::XML(xml)
+      notes = document.xpath("//ram:IncludedNote/ram:Content", "ram" => described_class::RAM_NS)
+
+      expect(notes.map(&:text)).to eq([
+        "Credit note for invoice FAC-2024-0042 dated 15/03/2024"
+      ])
+    end
+
+    it "places BG-3 after the header monetary summation as required by the CII schema" do
+      require "nokogiri"
+      document = Nokogiri::XML(xml)
+      settlement = document.at_xpath(
+        "//ram:ApplicableHeaderTradeSettlement",
+        "ram" => described_class::RAM_NS
+      )
+
+      child_names = settlement.element_children.map(&:name)
+      expect(child_names.index("InvoiceReferencedDocument")).to be > child_names.index(
+        "SpecifiedTradeSettlementHeaderMonetarySummation"
+      )
     end
 
     it "is well-formed XML" do
       require "rexml/document"
       doc = REXML::Document.new(xml)
       expect(doc.root).not_to be_nil
+    end
+
+    it "is XSD-valid for the EN16931 profile" do
+      errors = validate_against_xsd(xml, "EN16931")
+      expect(errors).to be_empty, "XSD errors: #{errors.map(&:message).join(', ')}"
+    end
+
+    context "without the preceding invoice date" do
+      let(:invoice) do
+        Einvoicing::Invoice.new(
+          invoice_number:          "AVOIR-2024-001",
+          issue_date:              Date.new(2024, 4, 1),
+          seller:                  Fixtures.seller,
+          buyer:                   Fixtures.buyer,
+          lines:                   [ Fixtures.line ],
+          document_type:           :credit_note,
+          original_invoice_number: "FAC-2024-0042"
+        )
+      end
+
+      it "emits the required BT-25 without optional BT-26" do
+        require "nokogiri"
+        document = Nokogiri::XML(xml)
+        namespaces = { "ram" => described_class::RAM_NS }
+        reference = document.at_xpath(
+          "//ram:ApplicableHeaderTradeSettlement/ram:InvoiceReferencedDocument",
+          namespaces
+        )
+
+        expect(reference.at_xpath("./ram:IssuerAssignedID", namespaces).text).to eq("FAC-2024-0042")
+        expect(reference.at_xpath("./ram:FormattedIssueDateTime", namespaces)).to be_nil
+      end
+    end
+
+    context "with an explicit invoice note" do
+      let(:invoice) do
+        super().with(note: "Contract cancellation")
+      end
+
+      it "emits only the explicit note while retaining structured BG-3" do
+        require "nokogiri"
+        document = Nokogiri::XML(xml)
+        namespaces = { "ram" => described_class::RAM_NS }
+        notes = document.xpath("//ram:IncludedNote/ram:Content", namespaces)
+
+        expect(notes.map(&:text)).to eq([ "Contract cancellation" ])
+        expect(document.at_xpath(
+          "//ram:ApplicableHeaderTradeSettlement/ram:InvoiceReferencedDocument/ram:IssuerAssignedID",
+          namespaces
+        ).text).to eq("FAC-2024-0042")
+      end
+
+      it "remains XSD-valid" do
+        errors = validate_against_xsd(xml, "EN16931")
+        expect(errors).to be_empty, "XSD errors: #{errors.map(&:message).join(', ')}"
+      end
+    end
+
+    context "with a blank invoice note" do
+      let(:invoice) do
+        super().with(note: "  ")
+      end
+
+      it "falls back to the legacy human-readable reference note" do
+        expect(xml).to include(
+          "<ram:Content>Credit note for invoice FAC-2024-0042 dated 15/03/2024</ram:Content>"
+        )
+      end
     end
   end
 
