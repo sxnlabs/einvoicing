@@ -29,7 +29,9 @@ module Einvoicing
           *validate_invoice_fields(invoice),
           *validate_party(invoice.seller, :seller),
           *validate_party(invoice.buyer,  :buyer),
-          *validate_lines(invoice.lines)
+          *validate_lines(invoice.lines),
+          *validate_allowances_charges(invoice.allowances, :allowance),
+          *validate_allowances_charges(invoice.charges, :charge)
         ]
       end
 
@@ -193,6 +195,31 @@ module Einvoicing
         end.compact
       end
       private_class_method :validate_lines
+
+      # Document-level allowances (BG-20) and charges (BG-21). EN 16931 BR-31 /
+      # BR-36 require an amount, BR-33 / BR-38 a reason or a reason code.
+      def self.validate_allowances_charges(items, kind)
+        return [] if items.nil? || items.empty?
+
+        items.each_with_index.flat_map do |item, idx|
+          n = idx + 1
+          [
+            (if item.amount.negative?
+               { field: :"#{kind}_#{n}_amount", error: :amount_invalid,
+                 message: Einvoicing::I18n.t("errors.#{kind}.amount_invalid", index: n) }
+             end),
+            (if item.reason.to_s.strip.empty? && item.reason_code.to_s.strip.empty?
+               { field: :"#{kind}_#{n}_reason", error: :reason_missing,
+                 message: Einvoicing::I18n.t("errors.#{kind}.reason_missing", index: n) }
+             end),
+            (unless [ 0.0, 0.055, 0.10, 0.20 ].include?(item.vat_rate.to_f.round(3))
+               { field: :"#{kind}_#{n}_vat_rate", error: :vat_rate_invalid,
+                 message: Einvoicing::I18n.t("errors.#{kind}.vat_rate_invalid", index: n) }
+             end)
+          ]
+        end.compact
+      end
+      private_class_method :validate_allowances_charges
     end
   end
 end

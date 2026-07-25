@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## About This Project
 
-`einvoicing` is a Ruby gem (v0.5.0) for generating and validating EN 16931-compliant electronic invoices for European markets (primary focus: French B2B mandate, September 2026). It generates Factur-X (PDF/A-3b with embedded CII XML), UBL 2.1, and CII D16B formats.
+`einvoicing` is a Ruby gem (v0.8.0) for generating and validating EN 16931-compliant electronic invoices for European markets (primary focus: French B2B mandate, September 2026). It generates Factur-X (PDF/A-3b with embedded CII XML), UBL 2.1, and CII D16B formats.
 
 ## Commands
 
@@ -23,6 +23,7 @@ All use `Data.define` (Ruby 3.2+, immutable) with `BigDecimal` for financial cal
 - **Invoice** — top-level aggregate; auto-computes `tax_breakdown`, `net_total`, `tax_total`, `gross_total`, `due_amount`
 - **Party** — seller/buyer; resolves Peppol endpoint (SIRET → scheme 0002, fallback to email); supports `fetch_siret!` via Sirene API
 - **LineItem** — description, quantity, unit_price, vat_rate; computes net/vat/gross amounts
+- **AllowanceCharge** — document-level allowance (BG-20) or charge (BG-21); the invoice array it sits in (`allowances:` / `charges:`) decides the sign
 - **Tax** — rate, taxable_amount, tax_amount, category; maps to CII/UBL tax category codes
 
 ### Format Generators (`lib/einvoicing/formats/`)

@@ -329,6 +329,75 @@ RSpec.describe Einvoicing::Formats::CII do
     end
   end
 
+  describe "document-level allowances and charges (BG-20 / BG-21)" do
+    let(:invoice) do
+      Fixtures.invoice.with(
+        allowances: [
+          Einvoicing::AllowanceCharge.new(amount: "100.00", vat_rate: 0.20,
+                                          reason: "Remise commerciale", reason_code: "95",
+                                          base_amount: "1000.00", percentage: 10)
+        ],
+        charges: [
+          Einvoicing::AllowanceCharge.new(amount: "50.00", vat_rate: 0.20,
+                                          reason: "Frais de port", reason_code: "FC")
+        ]
+      )
+    end
+
+    let(:namespaces) { { "ram" => described_class::RAM_NS, "udt" => described_class::UDT_NS } }
+    let(:document) do
+      require "nokogiri"
+      Nokogiri::XML(xml)
+    end
+
+    it "emits the allowance with a false charge indicator" do
+      node = document.xpath("//ram:SpecifiedTradeAllowanceCharge", namespaces).first
+
+      expect(node.at_xpath("./ram:ChargeIndicator/udt:Indicator", namespaces).text).to eq("false")
+      expect(node.at_xpath("./ram:CalculationPercent", namespaces).text).to eq("10.00")
+      expect(node.at_xpath("./ram:BasisAmount", namespaces).text).to eq("1000.00")
+      expect(node.at_xpath("./ram:ActualAmount", namespaces).text).to eq("100.00")
+      expect(node.at_xpath("./ram:ReasonCode", namespaces).text).to eq("95")
+      expect(node.at_xpath("./ram:Reason", namespaces).text).to eq("Remise commerciale")
+      expect(node.at_xpath("./ram:CategoryTradeTax/ram:CategoryCode", namespaces).text).to eq("S")
+      expect(node.at_xpath("./ram:CategoryTradeTax/ram:RateApplicablePercent", namespaces).text).to eq("20.00")
+    end
+
+    it "emits the charge with a true charge indicator" do
+      node = document.xpath("//ram:SpecifiedTradeAllowanceCharge", namespaces).last
+
+      expect(node.at_xpath("./ram:ChargeIndicator/udt:Indicator", namespaces).text).to eq("true")
+      expect(node.at_xpath("./ram:ActualAmount", namespaces).text).to eq("50.00")
+      expect(node.at_xpath("./ram:Reason", namespaces).text).to eq("Frais de port")
+    end
+
+    it "reports the adjusted monetary summation" do
+      summation = document.at_xpath(
+        "//ram:SpecifiedTradeSettlementHeaderMonetarySummation", namespaces
+      )
+
+      expect(summation.at_xpath("./ram:LineTotalAmount", namespaces).text).to eq("1000.00")
+      expect(summation.at_xpath("./ram:ChargeTotalAmount", namespaces).text).to eq("50.00")
+      expect(summation.at_xpath("./ram:AllowanceTotalAmount", namespaces).text).to eq("100.00")
+      expect(summation.at_xpath("./ram:TaxBasisTotalAmount", namespaces).text).to eq("950.00")
+      expect(summation.at_xpath("./ram:TaxTotalAmount", namespaces).text).to eq("190.00")
+      expect(summation.at_xpath("./ram:GrandTotalAmount", namespaces).text).to eq("1140.00")
+      expect(summation.at_xpath("./ram:DuePayableAmount", namespaces).text).to eq("1140.00")
+    end
+
+    it "omits the allowance and charge totals when there are none" do
+      plain = described_class.generate(Fixtures.invoice)
+
+      expect(plain).not_to include("ram:AllowanceTotalAmount")
+      expect(plain).not_to include("ram:ChargeTotalAmount")
+    end
+
+    it "remains XSD-valid" do
+      errors = validate_against_xsd(xml, "EN16931")
+      expect(errors).to be_empty, "XSD errors: #{errors.map(&:message).join(', ')}"
+    end
+  end
+
   it "generates XSD-valid CII XML for EN16931 profile" do
     errors = validate_against_xsd(xml, "EN16931")
     expect(errors).to be_empty, "XSD errors: #{errors.map(&:message).join(', ')}"

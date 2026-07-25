@@ -27,6 +27,14 @@ fr:
         quantity_invalid: "Ligne %{index} : la quantité doit être positive"
         unit_price_invalid: "Ligne %{index} : le prix unitaire doit être non négatif"
         vat_rate_invalid: "Ligne %{index} : le taux de TVA doit être un taux français standard (0%%, 5,5%%, 10%%, 20%%)"
+      allowance:
+        amount_invalid: "Remise %{index} : le montant doit être non négatif"
+        reason_missing: "Remise %{index} : un motif ou un code motif est requis"
+        vat_rate_invalid: "Remise %{index} : le taux de TVA doit être un taux français standard (0%%, 5,5%%, 10%%, 20%%)"
+      charge:
+        amount_invalid: "Frais %{index} : le montant doit être non négatif"
+        reason_missing: "Frais %{index} : un motif ou un code motif est requis"
+        vat_rate_invalid: "Frais %{index} : le taux de TVA doit être un taux français standard (0%%, 5,5%%, 10%%, 20%%)"
     formats:
       unknown_format: "Format inconnu : %{fmt}. Utilisez :cii ou :ubl"
       unknown_market: "Marché inconnu : %{market}. Utilisez :fr"

@@ -310,4 +310,49 @@ RSpec.describe Einvoicing::Validators::FR do
       expect(errors).to include(a_hash_including(field: :bic, error: :bic_invalid))
     end
   end
+
+  describe "document-level allowances and charges" do
+    def invoice_with(allowances: [], charges: [])
+      Einvoicing::Invoice.new(
+        invoice_number: "INV-001",
+        issue_date:     Date.today,
+        seller:         Fixtures.seller,
+        buyer:          Fixtures.buyer,
+        lines:          [ Fixtures.line ],
+        allowances:     allowances,
+        charges:        charges
+      )
+    end
+
+    it "accepts an allowance carrying a reason and a standard rate" do
+      item = Einvoicing::AllowanceCharge.new(amount: "100.00", vat_rate: 0.20, reason: "Remise")
+      expect(described_class.validate(invoice_with(allowances: [ item ]))).to be_empty
+    end
+
+    it "accepts a reason code instead of a reason (BR-33)" do
+      item = Einvoicing::AllowanceCharge.new(amount: "100.00", vat_rate: 0.20, reason_code: "95")
+      expect(described_class.validate(invoice_with(allowances: [ item ]))).to be_empty
+    end
+
+    it "reports an allowance without reason nor reason code" do
+      item = Einvoicing::AllowanceCharge.new(amount: "100.00", vat_rate: 0.20)
+      errors = described_class.validate(invoice_with(allowances: [ item ]))
+
+      expect(errors).to include(a_hash_including(field: :allowance_1_reason, error: :reason_missing))
+    end
+
+    it "reports a negative allowance amount" do
+      item = Einvoicing::AllowanceCharge.new(amount: "-10.00", vat_rate: 0.20, reason: "Remise")
+      errors = described_class.validate(invoice_with(allowances: [ item ]))
+
+      expect(errors).to include(a_hash_including(field: :allowance_1_amount, error: :amount_invalid))
+    end
+
+    it "reports a non-French VAT rate on a charge" do
+      item = Einvoicing::AllowanceCharge.new(amount: "10.00", vat_rate: 0.17, reason: "Frais")
+      errors = described_class.validate(invoice_with(charges: [ item ]))
+
+      expect(errors).to include(a_hash_including(field: :charge_1_vat_rate, error: :vat_rate_invalid))
+    end
+  end
 end

@@ -243,4 +243,76 @@ RSpec.describe Einvoicing::Formats::UBL do
       expect(doc.root.name).to eq("CreditNote")
     end
   end
+
+  describe "document-level allowances and charges (BG-20 / BG-21)" do
+    let(:invoice) do
+      Fixtures.invoice.with(
+        allowances: [
+          Einvoicing::AllowanceCharge.new(amount: "100.00", vat_rate: 0.20,
+                                          reason: "Remise commerciale", reason_code: "95",
+                                          base_amount: "1000.00", percentage: 10)
+        ],
+        charges: [
+          Einvoicing::AllowanceCharge.new(amount: "50.00", vat_rate: 0.20,
+                                          reason: "Frais de port", reason_code: "FC")
+        ]
+      )
+    end
+
+    let(:namespaces) { { "cac" => described_class::CAC_NS, "cbc" => described_class::CBC_NS } }
+    let(:document) do
+      require "nokogiri"
+      Nokogiri::XML(xml)
+    end
+
+    it "emits the allowance with a false charge indicator" do
+      node = document.xpath("//cac:AllowanceCharge", namespaces).first
+
+      expect(node.at_xpath("./cbc:ChargeIndicator", namespaces).text).to eq("false")
+      expect(node.at_xpath("./cbc:AllowanceChargeReasonCode", namespaces).text).to eq("95")
+      expect(node.at_xpath("./cbc:AllowanceChargeReason", namespaces).text).to eq("Remise commerciale")
+      expect(node.at_xpath("./cbc:MultiplierFactorNumeric", namespaces).text).to eq("10.00")
+      expect(node.at_xpath("./cbc:Amount", namespaces).text).to eq("100.00")
+      expect(node.at_xpath("./cbc:BaseAmount", namespaces).text).to eq("1000.00")
+      expect(node.at_xpath("./cac:TaxCategory/cbc:ID", namespaces).text).to eq("S")
+      expect(node.at_xpath("./cac:TaxCategory/cbc:Percent", namespaces).text).to eq("20.00")
+    end
+
+    it "emits the charge with a true charge indicator" do
+      node = document.xpath("//cac:AllowanceCharge", namespaces).last
+
+      expect(node.at_xpath("./cbc:ChargeIndicator", namespaces).text).to eq("true")
+      expect(node.at_xpath("./cbc:Amount", namespaces).text).to eq("50.00")
+      expect(node.at_xpath("./cbc:AllowanceChargeReason", namespaces).text).to eq("Frais de port")
+    end
+
+    it "reports the adjusted legal monetary total" do
+      total = document.at_xpath("//cac:LegalMonetaryTotal", namespaces)
+
+      expect(total.at_xpath("./cbc:LineExtensionAmount", namespaces).text).to eq("1000.00")
+      expect(total.at_xpath("./cbc:TaxExclusiveAmount", namespaces).text).to eq("950.00")
+      expect(total.at_xpath("./cbc:TaxInclusiveAmount", namespaces).text).to eq("1140.00")
+      expect(total.at_xpath("./cbc:AllowanceTotalAmount", namespaces).text).to eq("100.00")
+      expect(total.at_xpath("./cbc:ChargeTotalAmount", namespaces).text).to eq("50.00")
+      expect(total.at_xpath("./cbc:PayableAmount", namespaces).text).to eq("1140.00")
+    end
+
+    it "adjusts the tax subtotal for the matching rate" do
+      subtotal = document.at_xpath("//cac:TaxTotal/cac:TaxSubtotal", namespaces)
+
+      expect(subtotal.at_xpath("./cbc:TaxableAmount", namespaces).text).to eq("950.00")
+      expect(subtotal.at_xpath("./cbc:TaxAmount", namespaces).text).to eq("190.00")
+    end
+
+    it "omits the allowance and charge totals when there are none" do
+      plain = described_class.generate(Fixtures.invoice)
+
+      expect(plain).not_to include("cbc:AllowanceTotalAmount")
+      expect(plain).not_to include("cbc:ChargeTotalAmount")
+    end
+
+    it "places AllowanceCharge before TaxTotal (UBL element order)" do
+      expect(xml.index("cac:AllowanceCharge")).to be < xml.index("cac:TaxTotal")
+    end
+  end
 end

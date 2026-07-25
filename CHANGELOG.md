@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-07-25
+
+### Added
+- Document-level allowances (BG-20) and charges (BG-21) via `Einvoicing::AllowanceCharge`, passed to `Invoice` as `allowances:` and `charges:` — emitted as `ram:SpecifiedTradeAllowanceCharge` in CII and `cac:AllowanceCharge` in UBL, with reason (BT-97/BT-104), reason code (BT-98/BT-105), base amount (BT-93/BT-100) and percentage (BT-94/BT-101)
+- `Invoice#line_total` (BT-106), `#allowance_total` (BT-107) and `#charge_total` (BT-108); `#net_total` is now BT-109 (`line_total − allowance_total + charge_total`, BR-CO-13) and the VAT breakdown adjusts each category's taxable base and VAT accordingly (BR-CO-10 to BR-CO-12)
+- `einvoicing_allowances` / `einvoicing_charges` hooks on `Einvoicing::Invoiceable` (both default to `[]`)
+- FR validator checks on allowances and charges: non-negative amount, reason or reason code required (BR-33 / BR-38), known French VAT rate
+
+### Fixed
+- `Invoice#with` recomputes the tax breakdown when `lines`, `allowances` or `charges` change, instead of carrying the stale one over to the copy — pass `tax_breakdown:` explicitly to keep a custom breakdown
+
 ## [0.7.1] - 2026-07-16
 
 ### Fixed
@@ -96,6 +107,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Zero runtime dependencies beyond hexapdf (stdlib-only XML generation via internal builder)
 - RSpec test suite
 
-[Unreleased]: https://github.com/sxnlabs/einvoicing/compare/v0.7.1...HEAD
+[Unreleased]: https://github.com/sxnlabs/einvoicing/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/sxnlabs/einvoicing/compare/v0.7.1...v0.8.0
 [0.7.1]: https://github.com/sxnlabs/einvoicing/compare/v0.7.0...v0.7.1
 [0.1.0]: https://github.com/sxnlabs/einvoicing/releases/tag/v0.1.0

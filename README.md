@@ -254,6 +254,39 @@ end
 
 A custom validator is any module that responds to `.validate(invoice)` and returns `Array<Hash>`.
 
+## Document-Level Allowances and Charges
+
+A global discount (BG-20) or a global charge such as shipping (BG-21) is not a line item — it applies to the whole document, at a given VAT rate:
+
+```ruby
+invoice = Einvoicing::Invoice.new(
+  # ... other fields ...
+  lines: lines,
+  allowances: [
+    Einvoicing::AllowanceCharge.new(
+      amount:      BigDecimal("100.00"),   # BT-92 — always positive
+      vat_rate:    0.20,                   # BT-96 — the rate it applies to
+      reason:      "Remise commerciale",   # BT-97
+      reason_code: "95",                   # BT-98 (UNCL5189)
+      base_amount: BigDecimal("1000.00"),  # BT-93 (optional)
+      percentage:  10                      # BT-94 (optional)
+    )
+  ],
+  charges: [
+    Einvoicing::AllowanceCharge.new(amount: BigDecimal("50.00"), vat_rate: 0.20, reason: "Frais de port")
+  ]
+)
+
+invoice.line_total       # BT-106 — sum of line net amounts       => 1000.00
+invoice.allowance_total  # BT-107                                 =>  100.00
+invoice.charge_total     # BT-108                                 =>   50.00
+invoice.net_total        # BT-109 — lines − allowances + charges  =>  950.00
+invoice.tax_total        # BT-110 — VAT on the adjusted base      =>  190.00
+invoice.gross_total      # BT-112                                 => 1140.00
+```
+
+Each allowance and charge adjusts the taxable base and the VAT of its own category in the breakdown (EN 16931 BR-CO-10 to BR-CO-13). EN 16931 requires a reason or a reason code on each one (BR-33 / BR-38), and the FR validator enforces it.
+
 ## Payment Means
 
 Add IBAN, BIC, and UNCL4461 payment type code to the invoice. Both CII and UBL generators emit the appropriate elements automatically.

@@ -32,6 +32,8 @@ module Einvoicing
           customer_party(b, invoice.buyer)
           billing_reference(b, invoice) if credit_note && invoice.original_invoice_number
           payment_means(b, invoice) if invoice.payment_means_code
+          invoice.allowances.each { |a| allowance_charge(b, a, invoice.currency, charge: false) }
+          invoice.charges.each    { |c| allowance_charge(b, c, invoice.currency, charge: true) }
           tax_total(b, invoice)
           monetary_total(b, invoice)
           invoice.lines.each_with_index do |line, idx|
@@ -151,14 +153,42 @@ module Einvoicing
       end
       private_class_method :tax_total
 
+      # BG-20 (allowance) / BG-21 (charge) at document level.
+      def self.allowance_charge(b, item, currency, charge:)
+        b.tag("cac:AllowanceCharge") do
+          b.text("cbc:ChargeIndicator", charge.to_s)
+          b.text("cbc:AllowanceChargeReasonCode", item.reason_code) if item.reason_code
+          b.text("cbc:AllowanceChargeReason", item.reason) if item.reason
+          b.text("cbc:MultiplierFactorNumeric", format_amount(item.percentage)) if item.percentage
+          b.text("cbc:Amount", format_amount(item.amount), "currencyID" => currency)
+          if item.base_amount
+            b.text("cbc:BaseAmount", format_amount(item.base_amount), "currencyID" => currency)
+          end
+          b.tag("cac:TaxCategory") do
+            b.text("cbc:ID",      item.tax_category_code)
+            b.text("cbc:Percent", format_amount(item.vat_rate_percent))
+            b.tag("cac:TaxScheme") { b.text("cbc:ID", "VAT") }
+          end
+        end
+      end
+      private_class_method :allowance_charge
+
       def self.monetary_total(b, invoice)
         b.tag("cac:LegalMonetaryTotal") do
-          b.text("cbc:LineExtensionAmount", format_amount(invoice.net_total),
+          b.text("cbc:LineExtensionAmount", format_amount(invoice.line_total),
                  "currencyID" => invoice.currency)
           b.text("cbc:TaxExclusiveAmount", format_amount(invoice.net_total),
                  "currencyID" => invoice.currency)
           b.text("cbc:TaxInclusiveAmount", format_amount(invoice.gross_total),
                  "currencyID" => invoice.currency)
+          if invoice.allowance_total.positive?
+            b.text("cbc:AllowanceTotalAmount", format_amount(invoice.allowance_total),
+                   "currencyID" => invoice.currency)
+          end
+          if invoice.charge_total.positive?
+            b.text("cbc:ChargeTotalAmount", format_amount(invoice.charge_total),
+                   "currencyID" => invoice.currency)
+          end
           if invoice.prepaid_amount.positive?
             b.text("cbc:PrepaidAmount", format_amount(invoice.prepaid_amount),
                    "currencyID" => invoice.currency)

@@ -27,6 +27,14 @@ en:
         quantity_invalid: "Line %{index}: quantity must be positive"
         unit_price_invalid: "Line %{index}: unit price must be non-negative"
         vat_rate_invalid: "Line %{index}: VAT rate must be a known French rate (0%%, 5.5%%, 10%%, 20%%)"
+      allowance:
+        amount_invalid: "Allowance %{index}: amount must be non-negative"
+        reason_missing: "Allowance %{index}: a reason or a reason code is required"
+        vat_rate_invalid: "Allowance %{index}: VAT rate must be a known French rate (0%%, 5.5%%, 10%%, 20%%)"
+      charge:
+        amount_invalid: "Charge %{index}: amount must be non-negative"
+        reason_missing: "Charge %{index}: a reason or a reason code is required"
+        vat_rate_invalid: "Charge %{index}: VAT rate must be a known French rate (0%%, 5.5%%, 10%%, 20%%)"
     formats:
       unknown_format: "Unknown format: %{fmt}. Use :cii or :ubl"
       unknown_market: "Unknown market: %{market}. Use :fr"

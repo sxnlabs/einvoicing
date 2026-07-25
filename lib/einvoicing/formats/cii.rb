@@ -182,6 +182,9 @@ module Einvoicing
             end
           end
 
+          invoice.allowances.each { |allowance| trade_allowance_charge(b, allowance, charge: false) }
+          invoice.charges.each    { |charge|    trade_allowance_charge(b, charge,    charge: true) }
+
           if invoice.due_date
             b.tag("ram:SpecifiedTradePaymentTerms") do
               b.tag("ram:DueDateDateTime") do
@@ -191,7 +194,9 @@ module Einvoicing
           end
 
           b.tag("ram:SpecifiedTradeSettlementHeaderMonetarySummation") do
-            b.text("ram:LineTotalAmount",    format_amount(invoice.net_total))
+            b.text("ram:LineTotalAmount",    format_amount(invoice.line_total))
+            b.text("ram:ChargeTotalAmount",  format_amount(invoice.charge_total)) if invoice.charge_total.positive?
+            b.text("ram:AllowanceTotalAmount", format_amount(invoice.allowance_total)) if invoice.allowance_total.positive?
             b.text("ram:TaxBasisTotalAmount", format_amount(invoice.net_total))
             b.text("ram:TaxTotalAmount",     format_amount(invoice.tax_total),
                    "currencyID" => invoice.currency)
@@ -205,6 +210,27 @@ module Einvoicing
         end
       end
       private_class_method :header_trade_settlement
+
+      # BG-20 (allowance) / BG-21 (charge) at document level. The element order
+      # follows the Factur-X EN16931 profile sequence.
+      def self.trade_allowance_charge(b, item, charge:)
+        b.tag("ram:SpecifiedTradeAllowanceCharge") do
+          b.tag("ram:ChargeIndicator") do
+            b.text("udt:Indicator", charge.to_s)
+          end
+          b.text("ram:CalculationPercent", format_amount(item.percentage)) if item.percentage
+          b.text("ram:BasisAmount", format_amount(item.base_amount)) if item.base_amount
+          b.text("ram:ActualAmount", format_amount(item.amount))
+          b.text("ram:ReasonCode", item.reason_code) if item.reason_code
+          b.text("ram:Reason", item.reason) if item.reason
+          b.tag("ram:CategoryTradeTax") do
+            b.text("ram:TypeCode", "VAT")
+            b.text("ram:CategoryCode", item.tax_category_code)
+            b.text("ram:RateApplicablePercent", format_amount(item.vat_rate_percent))
+          end
+        end
+      end
+      private_class_method :trade_allowance_charge
 
       def self.preceding_invoice_reference(b, invoice)
         b.tag("ram:InvoiceReferencedDocument") do

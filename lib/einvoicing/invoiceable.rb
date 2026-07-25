@@ -70,8 +70,22 @@ module Einvoicing
         currency:       respond_to?(:currency) ? (currency || "EUR") : "EUR",
         seller:         einvoicing_seller,
         buyer:          einvoicing_buyer,
-        lines:          einvoicing_lines
+        lines:          einvoicing_lines,
+        allowances:     einvoicing_allowances,
+        charges:        einvoicing_charges
       )
+    end
+
+    # Document-level allowances (BG-20). Override to return
+    # Array<Einvoicing::AllowanceCharge>.
+    def einvoicing_allowances
+      []
+    end
+
+    # Document-level charges (BG-21). Override to return
+    # Array<Einvoicing::AllowanceCharge>.
+    def einvoicing_charges
+      []
     end
 
     # Generate CII D16B XML string.
