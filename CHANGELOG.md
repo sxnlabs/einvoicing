@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.1] - 2026-07-25
+
+### Fixed
+- Packaged files are no longer shipped with the maintainer's private file mode. `gem build` copies each file's mode from the working tree and git records only the executable bit, so files sitting at 0600 in a checkout shipped as 0600 and the gem failed to load for any non-root user — `cannot load such file -- .../lib/einvoicing/errors`. Affects every release built from a checkout with a restrictive umask; a spec now fails the build before such a gem can be pushed
+
 ## [0.8.0] - 2026-07-25
 
 ### Added
@@ -107,7 +112,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Zero runtime dependencies beyond hexapdf (stdlib-only XML generation via internal builder)
 - RSpec test suite
 
-[Unreleased]: https://github.com/sxnlabs/einvoicing/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/sxnlabs/einvoicing/compare/v0.8.1...HEAD
+[0.8.1]: https://github.com/sxnlabs/einvoicing/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/sxnlabs/einvoicing/compare/v0.7.1...v0.8.0
 [0.7.1]: https://github.com/sxnlabs/einvoicing/compare/v0.7.0...v0.7.1
 [0.1.0]: https://github.com/sxnlabs/einvoicing/releases/tag/v0.1.0
