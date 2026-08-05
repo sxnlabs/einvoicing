@@ -77,16 +77,23 @@ module Einvoicing
       )
     end
 
-    # Data#with feeds every current member back through the constructor, which
-    # would carry the already-computed tax_breakdown over to the copy and leave
-    # it stale. Drop it so the copy recomputes — unless the caller supplies one.
+    # Changing any of these invalidates the memoised breakdown, so the copy has
+    # to recompute it — unless the caller supplies one of their own.
     RECOMPUTES_TAX_BREAKDOWN = %i[lines allowances charges].freeze
 
+    # Rebuilt through the constructor rather than by delegating to Data#with:
+    # only Ruby >= 3.3 routes #with through #initialize. On 3.2 it copies the
+    # members straight across, so `tax_breakdown: nil` would be written as-is
+    # and every total computed from it would blow up on nil.
     def with(**kwargs)
-      return super if kwargs.key?(:tax_breakdown)
-      return super if (kwargs.keys & RECOMPUTES_TAX_BREAKDOWN).empty?
+      return self if kwargs.empty?
 
-      super(**kwargs, tax_breakdown: nil)
+      attributes = to_h.merge(kwargs)
+      if !kwargs.key?(:tax_breakdown) && kwargs.keys.intersect?(RECOMPUTES_TAX_BREAKDOWN)
+        attributes[:tax_breakdown] = nil
+      end
+
+      self.class.new(**attributes)
     end
 
     # Sum of all line net amounts, before document-level adjustments (BT-106).
