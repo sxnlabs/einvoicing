@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require "bigdecimal"
+require "bigdecimal/util"
+
 module Einvoicing
   module Validators
     # French invoice validator.
@@ -17,6 +20,40 @@ module Einvoicing
       # FR VAT: "FR" + 2 alphanumeric chars + 9-digit SIREN
       VAT_RE     = /\AFR[A-Z0-9]{2}\d{9}\z/
       INV_NUM_RE = /\A[\w\-\/]{1,35}\z/
+
+      # An invoice to a company in another member state carries that country's
+      # VAT number (BT-48), not a French one. Rejecting it broke every
+      # intra-Community and reverse-charge invoice.
+      EU_VAT_PATTERNS = {
+        "AT" => /\AATU\d{8}\z/,                 "BE" => /\ABE[01]\d{9}\z/,
+        "BG" => /\ABG\d{9,10}\z/,               "CY" => /\ACY\d{8}[A-Z]\z/,
+        "CZ" => /\ACZ\d{8,10}\z/,               "DE" => /\ADE\d{9}\z/,
+        "DK" => /\ADK\d{8}\z/,                  "EE" => /\AEE\d{9}\z/,
+        "EL" => /\AEL\d{9}\z/,                  "ES" => /\AES[A-Z0-9]\d{7}[A-Z0-9]\z/,
+        "FI" => /\AFI\d{8}\z/,                  "FR" => VAT_RE,
+        "HR" => /\AHR\d{11}\z/,                 "HU" => /\AHU\d{8}\z/,
+        "IE" => /\AIE(\d{7}[A-Z]{1,2}|\d[A-Z0-9+*]\d{5}[A-Z])\z/,
+        "IT" => /\AIT\d{11}\z/,                 "LT" => /\ALT(\d{9}|\d{12})\z/,
+        "LU" => /\ALU\d{8}\z/,                  "LV" => /\ALV\d{11}\z/,
+        "MT" => /\AMT\d{8}\z/,                  "NL" => /\ANL\d{9}B\d{2}\z/,
+        "PL" => /\APL\d{10}\z/,                 "PT" => /\APT\d{9}\z/,
+        "RO" => /\ARO\d{2,10}\z/,               "SE" => /\ASE\d{12}\z/,
+        "SI" => /\ASI\d{8}\z/,                  "SK" => /\ASK\d{10}\z/,
+        # Northern Ireland keeps an EU VAT identifier under the Windsor Framework.
+        "XI" => /\AXI(\d{9}|\d{12}|(GD|HA)\d{3})\z/
+      }.freeze
+
+      # Fallback for non-EU counterparties: 2-letter country prefix + 2 to 15
+      # alphanumeric characters. Enough to catch a typo, not a customs ruling.
+      NON_EU_VAT_RE = /\A[A-Z]{2}[A-Z0-9]{2,15}\z/
+
+      # France (metropolitan): 20 %, 10 %, 5.5 %, 2.1 %.
+      # DOM (Guadeloupe, Martinique, Réunion): 8.5 %, 2.1 %, 1.75 %, 1.05 %.
+      # Corsica: 20 %, 13 %, 10 %, 2.1 %, 0.9 %.
+      VAT_RATES = [
+        "0", "0.009", "0.0105", "0.0175", "0.021",
+        "0.055", "0.085", "0.10", "0.13", "0.20"
+      ].map { |r| BigDecimal(r) }.freeze
       # IBAN: country code (2 alpha) + 2 check digits + BBAN (11-30 alphanumeric) = 15-34 total
       IBAN_RE    = /\A[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}\z/
       # BIC: 4 alpha (institution) + 2 alpha (country) + 2 alphanumeric (location) + optional 3 alphanumeric (branch)
@@ -31,7 +68,9 @@ module Einvoicing
           *validate_party(invoice.buyer,  :buyer),
           *validate_lines(invoice.lines),
           *validate_allowances_charges(invoice.allowances, :allowance),
-          *validate_allowances_charges(invoice.charges, :charge)
+          *validate_allowances_charges(invoice.charges, :charge),
+          *validate_tax_breakdown(invoice.tax_breakdown),
+          *validate_tax_currency(invoice)
         ]
       end
 
@@ -61,11 +100,26 @@ module Einvoicing
         Base.luhn_valid?(siret.to_s)
       end
 
-      # Validate a French VAT number format.
-      # @param vat [String] e.g. "FR12123456789"
+      # Validate a VAT number against the format of the country it belongs to.
+      # The party's own country wins when known, so a French party still has to
+      # carry an FR number; otherwise the number's own prefix decides.
+      # @param vat [String] e.g. "FR12123456789", "DE811907980"
+      # @param country_code [String, nil] the party's country (BT-40 / BT-55)
       # @return [Boolean]
-      def self.valid_vat_number?(vat)
-        vat.to_s.match?(VAT_RE)
+      def self.valid_vat_number?(vat, country_code: nil)
+        str = vat.to_s.gsub(/\s/, "").upcase
+        pattern = EU_VAT_PATTERNS[country_code.to_s.upcase] || EU_VAT_PATTERNS[str[0, 2]]
+        return str.match?(pattern) if pattern
+
+        str.match?(NON_EU_VAT_RE)
+      end
+
+      # A known French VAT rate, including the DOM and Corsican rates that the
+      # "20 / 10 / 5.5 / 0" shortlist leaves out.
+      # @param rate [Numeric] e.g. 0.021
+      # @return [Boolean]
+      def self.valid_vat_rate?(rate)
+        VAT_RATES.include?(BigDecimal(rate.to_s).round(4))
       end
 
       # Validate an invoice number format (alphanumeric, dashes, slashes, 1-35 chars).
@@ -157,7 +211,8 @@ module Einvoicing
                       message: Einvoicing::I18n.t("errors.#{role}.siret_invalid") }
         end
 
-        if party.vat_number && !valid_vat_number?(party.vat_number)
+        if party.vat_number &&
+           !valid_vat_number?(party.vat_number, country_code: party.country_code)
           errors << { field: :"#{role}_vat_number", error: :vat_number_invalid,
                       message: Einvoicing::I18n.t("errors.#{role}.vat_number_invalid") }
         end
@@ -187,7 +242,7 @@ module Einvoicing
                { field: :"line_#{n}_unit_price", error: :unit_price_invalid,
                  message: Einvoicing::I18n.t("errors.line.unit_price_invalid", index: n) }
              end),
-            (unless [ 0.0, 0.055, 0.10, 0.20 ].include?(line.vat_rate.to_f.round(3))
+            (unless valid_vat_rate?(line.vat_rate)
                { field: :"line_#{n}_vat_rate", error: :vat_rate_invalid,
                  message: Einvoicing::I18n.t("errors.line.vat_rate_invalid", index: n) }
              end)
@@ -212,7 +267,7 @@ module Einvoicing
                { field: :"#{kind}_#{n}_reason", error: :reason_missing,
                  message: Einvoicing::I18n.t("errors.#{kind}.reason_missing", index: n) }
              end),
-            (unless [ 0.0, 0.055, 0.10, 0.20 ].include?(item.vat_rate.to_f.round(3))
+            (unless valid_vat_rate?(item.vat_rate)
                { field: :"#{kind}_#{n}_vat_rate", error: :vat_rate_invalid,
                  message: Einvoicing::I18n.t("errors.#{kind}.vat_rate_invalid", index: n) }
              end)
@@ -220,6 +275,35 @@ module Einvoicing
         end.compact
       end
       private_class_method :validate_allowances_charges
+
+      # BR-E-10 / BR-AE-10 / BR-IC-10 / BR-G-10 / BR-O-10: an exempt, reverse
+      # charge, intra-Community, export or out-of-scope breakdown line must
+      # state why no VAT is charged (BT-120 or BT-121).
+      def self.validate_tax_breakdown(breakdown)
+        return [] if breakdown.nil? || breakdown.empty?
+
+        breakdown.each_with_index.filter_map do |tax, idx|
+          next unless tax.exemption_required?
+          next unless tax.exemption_reason.to_s.strip.empty? &&
+                      tax.exemption_reason_code.to_s.strip.empty?
+
+          { field: :"tax_#{idx + 1}_exemption_reason", error: :exemption_reason_missing,
+            message: Einvoicing::I18n.t("errors.tax.exemption_reason_missing",
+                                        category: tax.category_code) }
+        end
+      end
+      private_class_method :validate_tax_breakdown
+
+      # BR-53: once a VAT accounting currency (BT-6) is declared, the VAT total
+      # has to be restated in it (BT-111).
+      def self.validate_tax_currency(invoice)
+        return [] unless invoice.tax_accounting_currency?
+        return [] unless invoice.tax_total_in_tax_currency.nil?
+
+        [ { field: :tax_exchange_rate, error: :tax_exchange_rate_missing,
+            message: Einvoicing::I18n.t("errors.invoice.tax_exchange_rate_missing") } ]
+      end
+      private_class_method :validate_tax_currency
     end
   end
 end

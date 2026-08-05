@@ -24,6 +24,7 @@ module Einvoicing
     :due_date,
     :currency,
     :tax_currency,
+    :tax_exchange_rate,
     :seller,
     :buyer,
     :lines,
@@ -42,7 +43,8 @@ module Einvoicing
   ) do
     def initialize(invoice_number:, issue_date:, seller:, buyer:, lines:,
                    allowances: [], charges: [],
-                   due_date: nil, currency: "EUR", tax_currency: nil, tax_breakdown: nil,
+                   due_date: nil, currency: "EUR", tax_currency: nil,
+                   tax_exchange_rate: nil, tax_breakdown: nil,
                    payment_reference: nil, note: nil,
                    payment_means_code: nil, iban: nil, bic: nil,
                    document_type: :invoice, original_invoice_number: nil, original_invoice_date: nil,
@@ -56,6 +58,7 @@ module Einvoicing
         due_date: due_date,
         currency: currency,
         tax_currency: tax_currency,
+        tax_exchange_rate: tax_exchange_rate.nil? ? nil : BigDecimal(tax_exchange_rate.to_s),
         seller: seller,
         buyer: buyer,
         lines: lines,
@@ -126,11 +129,31 @@ module Einvoicing
       gross_total - prepaid_amount
     end
 
+    # BT-6 is set and differs from the invoice currency (BT-5), so BR-53 requires
+    # the total VAT to also be stated in the VAT accounting currency (BT-111).
+    def tax_accounting_currency?
+      !tax_currency.nil? && tax_currency != currency
+    end
+
+    # Total VAT in the VAT accounting currency (BT-111). Derived from
+    # `tax_exchange_rate` when given; nil when there is nothing to convert.
+    def tax_total_in_tax_currency
+      return nil unless tax_accounting_currency?
+      return nil if tax_exchange_rate.nil?
+
+      (tax_total * tax_exchange_rate).round(2, :half_up)
+    end
+
     private
 
     # Per-category taxable base (BT-116) and VAT (BT-117), adjusted by the
     # document-level allowances and charges that carry the same rate/category
     # (EN 16931 BR-CO-10 through BR-CO-12).
+    #
+    # BT-117 is derived from the rounded category base, not from the sum of the
+    # per-line VAT amounts: BR-S-09 (and its BR-Z/E/AE/K/G/O siblings) require
+    # BT-117 = BT-116 × BT-119. Summing rounded line VAT drifts by a cent per
+    # few dozen lines and a strict validator rejects the invoice.
     def compute_tax_breakdown(lines, allowances, charges)
       key = ->(item) { [ item.vat_rate, item.category ] }
       grouped_lines      = lines.group_by(&key)
@@ -143,16 +166,26 @@ module Einvoicing
         rate_allowances = grouped_allowances.fetch(k, [])
         rate_charges    = grouped_charges.fetch(k, [])
 
-        taxable = sum_of(rate_lines, :net_amount) -
-                  sum_of(rate_allowances, :amount) +
-                  sum_of(rate_charges, :amount)
-        tax_amt = sum_of(rate_lines, :vat_amount) -
-                  sum_of(rate_allowances, :vat_amount) +
-                  sum_of(rate_charges, :vat_amount)
+        taxable = (sum_of(rate_lines, :net_amount) -
+                   sum_of(rate_allowances, :amount) +
+                   sum_of(rate_charges, :amount)).round(2, :half_up)
+        tax_amt = (taxable * Tax.effective_rate(rate: rate, category: category)).round(2, :half_up)
 
-        Tax.new(rate: rate, taxable_amount: taxable.round(2, :half_up),
-                tax_amount: tax_amt.round(2, :half_up), category: category)
+        reason, reason_code = exemption_for(rate_lines + rate_allowances + rate_charges)
+
+        Tax.new(rate: rate, taxable_amount: taxable, tax_amount: tax_amt, category: category,
+                exemption_reason: reason, exemption_reason_code: reason_code)
       end
+    end
+
+    # BT-120 / BT-121 travel with the items; the breakdown adopts the first
+    # reason found in the group. Tax falls back to the VATEX default for the
+    # category when none is supplied.
+    def exemption_for(items)
+      [
+        items.find { |i| !i.exemption_reason.nil? }&.exemption_reason,
+        items.find { |i| !i.exemption_reason_code.nil? }&.exemption_reason_code
+      ]
     end
 
     def sum_of(items, method)

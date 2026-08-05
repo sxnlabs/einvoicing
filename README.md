@@ -18,7 +18,8 @@ This gem gives you a clean Ruby API to build compliant invoices, validate them a
 - Generate **Factur-X** invoices (PDF/A-3b with embedded CII D16B XML)
 - Generate **UBL 2.1** XML (Peppol BIS Billing 3.0)
 - Generate **CII D16B** XML (EN 16931 / ZUGFeRD)
-- Validate French B2B requirements: SIREN, SIRET (Luhn), TVA format, standard VAT rates
+- Full EN 16931 **VAT category set** (S, Z, E, AE, K, G, O) with exemption reasons (BT-120 / BT-121)
+- Validate French B2B requirements: SIREN, SIRET (Luhn), EU VAT number formats, French VAT rates including the DOM and Corsican ones
 - Structured error reporting: `{ field:, error:, message: }` with i18n support (EN + FR)
 - Payment means: IBAN, BIC/SWIFT, UNCL4461 type codes
 - **Rails concern** (`Einvoicing::Invoiceable`) for ActiveRecord models
@@ -286,6 +287,71 @@ invoice.gross_total      # BT-112                                 => 1140.00
 ```
 
 Each allowance and charge adjusts the taxable base and the VAT of its own category in the breakdown (EN 16931 BR-CO-10 to BR-CO-13). EN 16931 requires a reason or a reason code on each one (BR-33 / BR-38), and the FR validator enforces it.
+
+## VAT Categories and Exemption Reasons
+
+Every EN 16931 VAT category (BT-118) is available on a line, on a document-level
+allowance or charge, and on a hand-built breakdown entry:
+
+| Symbol | Code | Meaning |
+|---|---|---|
+| `:standard` | S | Standard rate |
+| `:zero_rated` | Z | Zero rated |
+| `:exempt` | E | Exempt from VAT |
+| `:reverse_charge` | AE | Reverse charge |
+| `:intra_community` | K | Intra-Community supply |
+| `:export` | G | Export outside the EU |
+| `:not_subject` | O | Outside the scope of VAT |
+
+`E`, `AE`, `K`, `G` and `O` must state why no VAT is charged (BR-E-10, BR-AE-10,
+BR-IC-10, BR-G-10, BR-O-10). AE, K, G and O fall back to their VATEX code; `E`
+depends on the exemption invoked, so you supply it:
+
+```ruby
+Einvoicing::LineItem.new(
+  description: "Prestation de conseil",
+  quantity:    1,
+  unit_price:  BigDecimal("2500.00"),
+  vat_rate:    0,
+  category:    :exempt,
+  exemption_reason:      "TVA non applicable, art. 293 B du CGI",
+  exemption_reason_code: Einvoicing::Tax::VATEX_FR_FRANCHISE
+)
+```
+
+A reverse-charge line needs nothing extra — the breakdown carries
+`VATEX-EU-AE` / "Reverse charge" on its own:
+
+```ruby
+Einvoicing::LineItem.new(description: "Développement", quantity: 1,
+                         unit_price: BigDecimal("10920.00"),
+                         vat_rate: 0, category: :reverse_charge)
+```
+
+Category VAT (BT-117) is computed from the category's taxable base (BT-116 ×
+BT-119), not by summing the per-line VAT — the two diverge by a cent every few
+dozen lines and BR-S-09 is checked to the cent.
+
+## VAT Accounting Currency
+
+When you invoice in one currency and account for VAT in another (BT-6 ≠ BT-5),
+BR-53 requires the VAT total restated in the accounting currency (BT-111). Give
+the gem the rate and it emits both:
+
+```ruby
+invoice = Einvoicing::Invoice.new(
+  # ... other fields ...
+  currency:          "USD",
+  tax_currency:      "EUR",
+  tax_exchange_rate: BigDecimal("0.92")
+)
+
+invoice.tax_total                  # => 1840.00 (USD)
+invoice.tax_total_in_tax_currency  # => 1692.80 (EUR)
+```
+
+The FR validator flags a declared `tax_currency` with no `tax_exchange_rate`,
+since the document could not satisfy BR-53.
 
 ## Payment Means
 

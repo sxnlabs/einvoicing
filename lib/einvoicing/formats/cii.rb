@@ -154,6 +154,8 @@ module Einvoicing
       def self.header_trade_settlement(b, invoice)
         b.tag("ram:ApplicableHeaderTradeSettlement") do
           b.text("ram:PaymentReference", invoice.payment_reference || invoice.invoice_number)
+          # BT-6 precedes BT-5 in the CII sequence.
+          b.text("ram:TaxCurrencyCode", invoice.tax_currency) if invoice.tax_accounting_currency?
           b.text("ram:InvoiceCurrencyCode", invoice.currency)
 
           if invoice.payment_means_code
@@ -176,8 +178,12 @@ module Einvoicing
             b.tag("ram:ApplicableTradeTax") do
               b.text("ram:CalculatedAmount", format_amount(tax.tax_amount))
               b.text("ram:TypeCode", "VAT")
+              # BT-120 / BT-121 sit either side of BasisAmount/CategoryCode in
+              # the CII sequence — order is not ours to choose.
+              b.text("ram:ExemptionReason", tax.exemption_reason) if emit_exemption?(tax, :reason)
               b.text("ram:BasisAmount", format_amount(tax.taxable_amount))
               b.text("ram:CategoryCode", tax.category_code)
+              b.text("ram:ExemptionReasonCode", tax.exemption_reason_code) if emit_exemption?(tax, :code)
               b.text("ram:RateApplicablePercent", format_amount(tax.rate_percent))
             end
           end
@@ -200,6 +206,12 @@ module Einvoicing
             b.text("ram:TaxBasisTotalAmount", format_amount(invoice.net_total))
             b.text("ram:TaxTotalAmount",     format_amount(invoice.tax_total),
                    "currencyID" => invoice.currency)
+            # BT-111 — BR-53 requires the VAT total in the accounting currency
+            # as soon as BT-6 is present.
+            if (converted = invoice.tax_total_in_tax_currency)
+              b.text("ram:TaxTotalAmount", format_amount(converted),
+                     "currencyID" => invoice.tax_currency)
+            end
             b.text("ram:GrandTotalAmount",   format_amount(invoice.gross_total))
             b.text("ram:TotalPrepaidAmount", format_amount(invoice.prepaid_amount)) if invoice.prepaid_amount.positive?
             b.text("ram:DuePayableAmount",   format_amount(invoice.due_amount))
@@ -231,6 +243,15 @@ module Einvoicing
         end
       end
       private_class_method :trade_allowance_charge
+
+      # BR-Z-10 and the standard category forbid BT-120/BT-121; the exempt-like
+      # categories require one of the two.
+      def self.emit_exemption?(tax, part)
+        return false unless tax.exemption_required?
+
+        part == :reason ? !tax.exemption_reason.nil? : !tax.exemption_reason_code.nil?
+      end
+      private_class_method :emit_exemption?
 
       def self.preceding_invoice_reference(b, invoice)
         b.tag("ram:InvoiceReferencedDocument") do

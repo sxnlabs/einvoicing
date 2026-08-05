@@ -57,6 +57,55 @@ RSpec.describe Einvoicing::Validators::FR do
     it "rejects a VAT number with wrong format" do
       expect(described_class.valid_vat_number?("FR1234")).to be false
     end
+
+    it "accepts a counterparty's own member-state VAT number" do
+      expect(described_class.valid_vat_number?("DE811907980", country_code: "DE")).to be true
+      expect(described_class.valid_vat_number?("BE0123456789", country_code: "BE")).to be true
+      expect(described_class.valid_vat_number?("NL123456789B01", country_code: "NL")).to be true
+    end
+
+    it "holds a party to its own country's pattern, not the number's prefix" do
+      expect(described_class.valid_vat_number?("DE811907980", country_code: "FR")).to be false
+    end
+
+    it "rejects a malformed number from a known member state" do
+      expect(described_class.valid_vat_number?("DE81190798", country_code: "DE")).to be false
+    end
+
+    it "does not flag an intra-Community buyer as invalid" do
+      german_buyer = Einvoicing::Party.new(
+        name: "Müller & Söhne GmbH", country_code: "DE", vat_number: "DE811907980"
+      )
+      inv = Einvoicing::Invoice.new(
+        invoice_number: "INV-001", issue_date: Date.today,
+        seller: Fixtures.seller, buyer: german_buyer, lines: [ Fixtures.line ]
+      )
+      expect(described_class.validate(inv))
+        .not_to include(a_hash_including(field: :buyer_vat_number))
+    end
+  end
+
+  describe ".valid_vat_rate?" do
+    it "accepts the metropolitan rates" do
+      [ 0, 0.021, 0.055, 0.10, 0.20 ].each do |rate|
+        expect(described_class.valid_vat_rate?(rate)).to be(true), "expected #{rate} to be valid"
+      end
+    end
+
+    it "accepts the DOM and Corsican rates that the usual shortlist drops" do
+      [ 0.0105, 0.0175, 0.085, 0.009, 0.13 ].each do |rate|
+        expect(described_class.valid_vat_rate?(rate)).to be(true), "expected #{rate} to be valid"
+      end
+    end
+
+    it "still rejects an invented rate" do
+      expect(described_class.valid_vat_rate?(0.15)).to be false
+    end
+
+    it "does not confuse 1.05 % with 1.75 %" do
+      expect(described_class.valid_vat_rate?(0.011)).to be false
+      expect(described_class.valid_vat_rate?(0.018)).to be false
+    end
   end
 
   describe ".valid_invoice_number?" do
