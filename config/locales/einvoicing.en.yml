@@ -12,32 +12,36 @@ en:
         bic_invalid: "BIC format is invalid (8 or 11 characters)"
         prepaid_amount_negative: "Prepaid amount cannot be negative"
         prepaid_amount_exceeds_total: "Prepaid amount cannot exceed the invoice total"
+        tax_exchange_rate_missing: "A VAT accounting currency (BT-6) requires tax_exchange_rate so the VAT total can be restated in it (BT-111)"
       seller:
         name_missing: "Seller name is required"
         siren_invalid: "Seller SIREN must be 9 digits (Luhn check failed)"
         siret_invalid: "Seller SIRET must be 14 digits (Luhn check failed)"
-        vat_number_invalid: "Seller VAT number must be in format FR + 2 chars + 9 digits"
+        vat_number_invalid: "Seller VAT number format is invalid for its country prefix"
       buyer:
         name_missing: "Buyer name is required"
         siren_invalid: "Buyer SIREN must be 9 digits (Luhn check failed)"
         siret_invalid: "Buyer SIRET must be 14 digits (Luhn check failed)"
-        vat_number_invalid: "Buyer VAT number must be in format FR + 2 chars + 9 digits"
+        vat_number_invalid: "Buyer VAT number format is invalid for its country prefix"
       line:
         description_missing: "Line %{index}: description is required"
         quantity_invalid: "Line %{index}: quantity must be positive"
         unit_price_invalid: "Line %{index}: unit price must be non-negative"
-        vat_rate_invalid: "Line %{index}: VAT rate must be a known French rate (0%%, 5.5%%, 10%%, 20%%)"
+        vat_rate_invalid: "Line %{index}: VAT rate must be a known French rate (0%%, 0.9%%, 1.05%%, 1.75%%, 2.1%%, 5.5%%, 8.5%%, 10%%, 13%%, 20%%)"
       allowance:
         amount_invalid: "Allowance %{index}: amount must be non-negative"
         reason_missing: "Allowance %{index}: a reason or a reason code is required"
-        vat_rate_invalid: "Allowance %{index}: VAT rate must be a known French rate (0%%, 5.5%%, 10%%, 20%%)"
+        vat_rate_invalid: "Allowance %{index}: VAT rate must be a known French rate (0%%, 0.9%%, 1.05%%, 1.75%%, 2.1%%, 5.5%%, 8.5%%, 10%%, 13%%, 20%%)"
       charge:
         amount_invalid: "Charge %{index}: amount must be non-negative"
         reason_missing: "Charge %{index}: a reason or a reason code is required"
-        vat_rate_invalid: "Charge %{index}: VAT rate must be a known French rate (0%%, 5.5%%, 10%%, 20%%)"
+        vat_rate_invalid: "Charge %{index}: VAT rate must be a known French rate (0%%, 0.9%%, 1.05%%, 1.75%%, 2.1%%, 5.5%%, 8.5%%, 10%%, 13%%, 20%%)"
+      tax:
+        exemption_reason_missing: "VAT category %{category} requires an exemption reason (BT-120) or an exemption reason code (BT-121)"
     formats:
       unknown_format: "Unknown format: %{fmt}. Use :cii or :ubl"
       unknown_market: "Unknown market: %{market}. Use :fr"
       invalid_pdf: "pdf_data does not appear to be a valid PDF (missing %PDF- magic bytes)"
     tax:
       invalid_rate: "rate must be >= 0, got %{rate}"
+      unknown_category: "unknown VAT category %{category}"

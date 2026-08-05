@@ -12,32 +12,36 @@ fr:
         bic_invalid: "Le format du BIC est invalide (8 ou 11 caractères)"
         prepaid_amount_negative: "Le montant déjà payé ne peut pas être négatif"
         prepaid_amount_exceeds_total: "Le montant déjà payé ne peut pas dépasser le total de la facture"
+        tax_exchange_rate_missing: "Une devise de comptabilisation de la TVA (BT-6) impose tax_exchange_rate pour exprimer le total de TVA dans cette devise (BT-111)"
       seller:
         name_missing: "Le nom du vendeur est requis"
         siren_invalid: "Le SIREN du vendeur doit comporter 9 chiffres (vérification Luhn échouée)"
         siret_invalid: "Le SIRET du vendeur doit comporter 14 chiffres (vérification Luhn échouée)"
-        vat_number_invalid: "Le numéro de TVA du vendeur doit être au format FR + 2 caractères + 9 chiffres"
+        vat_number_invalid: "Le format du numéro de TVA du vendeur est invalide pour son préfixe pays"
       buyer:
         name_missing: "Le nom de l'acheteur est requis"
         siren_invalid: "Le SIREN de l'acheteur doit comporter 9 chiffres (vérification Luhn échouée)"
         siret_invalid: "Le SIRET de l'acheteur doit comporter 14 chiffres (vérification Luhn échouée)"
-        vat_number_invalid: "Le numéro de TVA de l'acheteur doit être au format FR + 2 caractères + 9 chiffres"
+        vat_number_invalid: "Le format du numéro de TVA de l'acheteur est invalide pour son préfixe pays"
       line:
         description_missing: "Ligne %{index} : la description est requise"
         quantity_invalid: "Ligne %{index} : la quantité doit être positive"
         unit_price_invalid: "Ligne %{index} : le prix unitaire doit être non négatif"
-        vat_rate_invalid: "Ligne %{index} : le taux de TVA doit être un taux français standard (0%%, 5,5%%, 10%%, 20%%)"
+        vat_rate_invalid: "Ligne %{index} : le taux de TVA doit être un taux français standard (0%%, 0,9%%, 1,05%%, 1,75%%, 2,1%%, 5,5%%, 8,5%%, 10%%, 13%%, 20%%)"
       allowance:
         amount_invalid: "Remise %{index} : le montant doit être non négatif"
         reason_missing: "Remise %{index} : un motif ou un code motif est requis"
-        vat_rate_invalid: "Remise %{index} : le taux de TVA doit être un taux français standard (0%%, 5,5%%, 10%%, 20%%)"
+        vat_rate_invalid: "Remise %{index} : le taux de TVA doit être un taux français standard (0%%, 0,9%%, 1,05%%, 1,75%%, 2,1%%, 5,5%%, 8,5%%, 10%%, 13%%, 20%%)"
       charge:
         amount_invalid: "Frais %{index} : le montant doit être non négatif"
         reason_missing: "Frais %{index} : un motif ou un code motif est requis"
-        vat_rate_invalid: "Frais %{index} : le taux de TVA doit être un taux français standard (0%%, 5,5%%, 10%%, 20%%)"
+        vat_rate_invalid: "Frais %{index} : le taux de TVA doit être un taux français standard (0%%, 0,9%%, 1,05%%, 1,75%%, 2,1%%, 5,5%%, 8,5%%, 10%%, 13%%, 20%%)"
+      tax:
+        exemption_reason_missing: "La catégorie de TVA %{category} impose un motif d'exonération (BT-120) ou un code motif (BT-121)"
     formats:
       unknown_format: "Format inconnu : %{fmt}. Utilisez :cii ou :ubl"
       unknown_market: "Marché inconnu : %{market}. Utilisez :fr"
       invalid_pdf: "pdf_data ne semble pas être un PDF valide (octets magiques %PDF- manquants)"
     tax:
       invalid_rate: "le taux doit être >= 0, valeur reçue : %{rate}"
+      unknown_category: "catégorie de TVA inconnue : %{category}"

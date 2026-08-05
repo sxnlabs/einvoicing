@@ -13,15 +13,24 @@ module Einvoicing
   #     unit_price: 150.00,
   #     vat_rate: 0.20
   #   )
-  LineItem = Data.define(:description, :quantity, :unit_price, :vat_rate, :unit, :category) do
-    def initialize(description:, quantity:, unit_price:, vat_rate: 0.20, unit: "C62", category: nil)
+  LineItem = Data.define(:description, :quantity, :unit_price, :vat_rate, :unit, :category,
+                         :exemption_reason, :exemption_reason_code) do
+    # @param category [Symbol, nil] a key of Einvoicing::Tax::CATEGORY_CODES
+    #   (:standard, :zero_rated, :exempt, :reverse_charge, :intra_community,
+    #   :export, :not_subject); nil infers standard or zero-rated from the rate
+    # @param exemption_reason [String, nil] BT-120, carried into the VAT breakdown
+    # @param exemption_reason_code [String, nil] BT-121, carried into the VAT breakdown
+    def initialize(description:, quantity:, unit_price:, vat_rate: 0.20, unit: "C62",
+                   category: nil, exemption_reason: nil, exemption_reason_code: nil)
       super(
         description: description,
         quantity:    BigDecimal(quantity.to_s),
         unit_price:  BigDecimal(unit_price.to_s),
         vat_rate:    vat_rate,
         unit:        unit,
-        category:    category
+        category:    category,
+        exemption_reason:      exemption_reason,
+        exemption_reason_code: exemption_reason_code
       )
     end
 
@@ -30,9 +39,9 @@ module Einvoicing
       (quantity * unit_price).round(2, :half_up)
     end
 
-    # VAT amount for this line.
+    # VAT amount for this line. Exempt / reverse-charge categories bill 0 %.
     def vat_amount
-      (net_amount * BigDecimal(vat_rate.to_s)).round(2, :half_up)
+      (net_amount * Tax.effective_rate(rate: vat_rate, category: category)).round(2, :half_up)
     end
 
     # Gross line total (including VAT).
@@ -41,9 +50,7 @@ module Einvoicing
     end
 
     def vat_rate_percent
-      return BigDecimal("0") if category == :reverse_charge
-
-      (BigDecimal(vat_rate.to_s) * 100).round(2)
+      (Tax.effective_rate(rate: vat_rate, category: category) * 100).round(2)
     end
 
     # CII/UBL tax category code — delegates to shared Tax logic.

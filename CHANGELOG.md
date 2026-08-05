@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-08-05
+
+Everything here comes from a batch of 15 deliberately hostile Factur-X invoices
+(multi-rate, reverse charge, 500 lines, DOM rates, foreign currency) run through
+the XSD, the PDF/A-3 container checks and a hand-recomputed EN 16931 rule set.
+Four of the five findings were ours.
+
+### Added
+- The full EN 16931 VAT category set (BT-118) on `LineItem`, `AllowanceCharge` and `Tax`: `:standard` (S), `:zero_rated` (Z), `:exempt` (E), `:reverse_charge` (AE), `:intra_community` (K), `:export` (G), `:not_subject` (O). An unknown category now raises instead of silently emitting `S`
+- VAT exemption reason (BT-120) and reason code (BT-121), emitted as `ram:ExemptionReason` / `ram:ExemptionReasonCode` in CII and `cbc:TaxExemptionReason` / `cbc:TaxExemptionReasonCode` in UBL. AE, K, G and O default to their VATEX code (`VATEX-EU-AE`, `VATEX-EU-IC`, `VATEX-EU-G`, `VATEX-EU-O`); E takes the caller's, with `Einvoicing::Tax::VATEX_FR_FRANCHISE` provided for the art. 293 B franchise. S and Z never carry one (BR-Z-10)
+- `tax_exchange_rate` on `Invoice`, plus `#tax_accounting_currency?` and `#tax_total_in_tax_currency`. When BT-6 differs from BT-5, CII now emits `ram:TaxCurrencyCode` and a second `ram:TaxTotalAmount` in the accounting currency (BT-111), and UBL a second `cac:TaxTotal` — BR-53
+- `Einvoicing::Validators::FR.valid_vat_rate?`, and FR validator checks for a missing exemption reason (BR-E-10, BR-AE-10, BR-IC-10, BR-G-10, BR-O-10) and for a declared accounting currency with no exchange rate (BR-53)
+
+### Fixed
+- Each VAT category's tax amount (BT-117) is now derived from its rounded taxable base (BT-116 × BT-119) instead of summing the rounded per-line VAT. The two agree on small invoices and drift apart on large ones — a 500-line invoice was off by 3 and 15 cents on two categories, which a strict BR-S-09 check rejects outright
+- The FR validator no longer rejects a counterparty's own VAT number. It now validates against the party's country (BT-40 / BT-55), with patterns for the 27 member states plus XI; every intra-Community and reverse-charge invoice used to fail on the buyer's VAT number
+- The French VAT rate list now includes the rates the "20 / 10 / 5.5 / 0" shortlist leaves out: 2.1 % (press, reimbursable medicine), the DOM rates 8.5 %, 1.75 % and 1.05 %, and the Corsican rates 13 % and 0.9 %. Comparison moved to `BigDecimal` at 4 decimals so 1.05 % and 1.75 % stop colliding
+- Exempt, reverse-charge and out-of-scope categories now bill 0 % whatever rate was passed in, so `RateApplicablePercent` and `CalculatedAmount` can no longer disagree
+
 ## [0.8.1] - 2026-07-25
 
 ### Fixed

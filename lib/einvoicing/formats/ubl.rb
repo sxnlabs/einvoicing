@@ -54,7 +54,7 @@ module Einvoicing
         b.text("cbc:InvoiceTypeCode", invoice.document_type == :credit_note ? "381" : "380")
         b.text("cbc:Note",            invoice.note) if invoice.note
         b.text("cbc:DocumentCurrencyCode", invoice.currency)
-        b.text("cbc:TaxCurrencyCode", invoice.tax_currency) if invoice.tax_currency
+        b.text("cbc:TaxCurrencyCode", invoice.tax_currency) if invoice.tax_accounting_currency?
         b.text("cbc:BuyerReference",  invoice.payment_reference || invoice.invoice_number)
       end
       private_class_method :header
@@ -145,10 +145,24 @@ module Einvoicing
               b.tag("cac:TaxCategory") do
                 b.text("cbc:ID",      tax.category_code)
                 b.text("cbc:Percent", format_amount(tax.rate_percent))
+                if tax.exemption_required?
+                  if tax.exemption_reason_code
+                    b.text("cbc:TaxExemptionReasonCode", tax.exemption_reason_code)
+                  end
+                  b.text("cbc:TaxExemptionReason", tax.exemption_reason) if tax.exemption_reason
+                end
                 b.tag("cac:TaxScheme") { b.text("cbc:ID", "VAT") }
               end
             end
           end
+        end
+
+        # BT-111 — a second TaxTotal carrying only the VAT total converted into
+        # the VAT accounting currency (BR-53).
+        return unless (converted = invoice.tax_total_in_tax_currency)
+
+        b.tag("cac:TaxTotal") do
+          b.text("cbc:TaxAmount", format_amount(converted), "currencyID" => invoice.tax_currency)
         end
       end
       private_class_method :tax_total
