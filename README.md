@@ -145,6 +145,16 @@ errors = Einvoicing::Validators::FR.validate(invoice)
 # => [{ field: :seller_siren, error: :siren_invalid, message: "Le numéro SIREN est invalide" }]
 ```
 
+### Check a generated file online
+
+Drop a Factur-X PDF into our free validator for a report on the PDF/A-3
+container, the embedded XML, the official XSD and the EN 16931 business rules.
+It runs entirely in the browser — the invoice never leaves your machine, and
+there is no account to create.
+
+- English — https://www.sxnlabs.com/en/factur-x-validator/
+- Français — https://www.sxnlabs.com/verifier-facture-electronique/
+
 ## Formats
 
 ### Factur-X (PDF/A-3 + CII)
