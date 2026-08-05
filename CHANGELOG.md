@@ -25,6 +25,7 @@ Four of the five findings were ours.
 - The FR validator no longer rejects a counterparty's own VAT number. It now validates against the party's country (BT-40 / BT-55), with patterns for the 27 member states plus XI; every intra-Community and reverse-charge invoice used to fail on the buyer's VAT number
 - The French VAT rate list now includes the rates the "20 / 10 / 5.5 / 0" shortlist leaves out: 2.1 % (press, reimbursable medicine), the DOM rates 8.5 %, 1.75 % and 1.05 %, and the Corsican rates 13 % and 0.9 %. Comparison moved to `BigDecimal` at 4 decimals so 1.05 % and 1.75 % stop colliding
 - Exempt, reverse-charge and out-of-scope categories now bill 0 % whatever rate was passed in, so `RateApplicablePercent` and `CalculatedAmount` can no longer disagree
+- `Invoice#with` no longer returns an invoice with a nil `tax_breakdown` on Ruby 3.2. It relied on `Data#with` calling `#initialize`, which only holds from Ruby 3.3 on; on 3.2 the members are copied straight across, so the deliberate `tax_breakdown: nil` was written as-is and every total derived from it raised `NoMethodError`. Broken since 0.8.0 for `#with(lines:)`, `#with(allowances:)` and `#with(charges:)` — the gem declares `>= 3.2`
 
 ## [0.8.1] - 2026-07-25
 
