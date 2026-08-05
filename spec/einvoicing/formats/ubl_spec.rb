@@ -54,7 +54,7 @@ RSpec.describe Einvoicing::Formats::UBL do
   end
 
   it "includes seller VAT number" do
-    expect(xml).to include("FR83356000000")
+    expect(xml).to include("FR39356000000")
   end
 
   it "includes seller SIREN" do

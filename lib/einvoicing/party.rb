@@ -10,8 +10,8 @@ module Einvoicing
   #     city: "Paris",
   #     postal_code: "75001",
   #     country_code: "FR",
-  #     siren: "123456789",
-  #     vat_number: "FR12123456789"
+  #     siren: "123456782",
+  #     vat_number: "FR11123456782"
   #   )
   Party = Data.define(:name, :street, :city, :postal_code, :country_code,
                       :siren, :siret, :vat_number, :email,

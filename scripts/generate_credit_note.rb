@@ -47,7 +47,7 @@ buyer = Einvoicing::Party.new(
   country_code: "FR",
   siren:        "552032534",
   siret:        "55203253400018",
-  vat_number:   "FR83552032534"
+  vat_number:   "FR27552032534"
 )
 
 # Full credit for invoice FAC-2024-0042.

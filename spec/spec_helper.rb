@@ -30,7 +30,7 @@ module Fixtures
       postal_code: "75001",
       country_code: "FR",
       siren:       "356000000",       # La Poste — known-valid Luhn SIREN
-      vat_number:  "FR83356000000"
+      vat_number:  "FR39356000000"
     )
   end
 

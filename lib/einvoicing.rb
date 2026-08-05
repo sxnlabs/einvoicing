@@ -37,7 +37,7 @@ end
 # SIRET, TVA). Provides a Rails concern for ActiveRecord models.
 #
 # @example Quick start
-#   seller = Einvoicing::Party.new(name: "Acme SAS", siren: "356000000", vat_number: "FR83356000000")
+#   seller = Einvoicing::Party.new(name: "Acme SAS", siren: "356000000", vat_number: "FR39356000000")
 #   buyer  = Einvoicing::Party.new(name: "Client SA", siren: "552032534")
 #   line   = Einvoicing::LineItem.new(description: "Consulting", quantity: 1, unit_price: 1000.00)
 #

@@ -19,7 +19,7 @@ This gem gives you a clean Ruby API to build compliant invoices, validate them a
 - Generate **UBL 2.1** XML (Peppol BIS Billing 3.0)
 - Generate **CII D16B** XML (EN 16931 / ZUGFeRD)
 - Full EN 16931 **VAT category set** (S, Z, E, AE, K, G, O) with exemption reasons (BT-120 / BT-121)
-- Validate French B2B requirements: SIREN, SIRET (Luhn), EU VAT number formats, French VAT rates including the DOM and Corsican ones
+- Validate French B2B requirements: SIREN, SIRET (Luhn), EU VAT number formats with the French check key verified, French VAT rates including the DOM and Corsican ones
 - Structured error reporting: `{ field:, error:, message: }` with i18n support (EN + FR)
 - Payment means: IBAN, BIC/SWIFT, UNCL4461 type codes
 - **Rails concern** (`Einvoicing::Invoiceable`) for ActiveRecord models
@@ -61,7 +61,7 @@ buyer = Einvoicing::Party.new(
   postal_code:  "75001",
   country_code: "FR",
   siren:        "552032534",
-  vat_number:   "FR83552032534"
+  vat_number:   "FR27552032534"
 )
 
 lines = [

@@ -17,12 +17,12 @@ en:
         name_missing: "Seller name is required"
         siren_invalid: "Seller SIREN must be 9 digits (Luhn check failed)"
         siret_invalid: "Seller SIRET must be 14 digits (Luhn check failed)"
-        vat_number_invalid: "Seller VAT number format is invalid for its country prefix"
+        vat_number_invalid: "Seller VAT number is invalid for its country (format, or check key for France)"
       buyer:
         name_missing: "Buyer name is required"
         siren_invalid: "Buyer SIREN must be 9 digits (Luhn check failed)"
         siret_invalid: "Buyer SIRET must be 14 digits (Luhn check failed)"
-        vat_number_invalid: "Buyer VAT number format is invalid for its country prefix"
+        vat_number_invalid: "Buyer VAT number is invalid for its country (format, or check key for France)"
       line:
         description_missing: "Line %{index}: description is required"
         quantity_invalid: "Line %{index}: quantity must be positive"

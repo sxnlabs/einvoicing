@@ -56,7 +56,7 @@ RSpec.describe Einvoicing::Formats::CII do
   end
 
   it "includes seller VAT number" do
-    expect(xml).to include("FR83356000000")
+    expect(xml).to include("FR39356000000")
   end
 
   it "includes line item description" do
@@ -411,9 +411,9 @@ RSpec.describe Einvoicing::Formats::CII do
         city:         "Paris",
         postal_code:  "75001",
         country_code: "FR",
-        siren:        "370647048",
-        siret:        "37064704857900",
-        vat_number:   "FR00370647048"
+        siren:        "370647042",
+        siret:        "37064704200008",
+        vat_number:   "FR68370647042"
       )
     end
 
@@ -433,7 +433,7 @@ RSpec.describe Einvoicing::Formats::CII do
 
     it "uses schemeID SIRET for seller with SIRET" do
       expect(xml).to include('schemeID="SIRET"')
-      expect(xml).to include("37064704857900")
+      expect(xml).to include("37064704200008")
     end
 
     it "uses schemeID 0002 for buyer with SIREN only" do

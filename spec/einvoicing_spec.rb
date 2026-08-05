@@ -15,7 +15,7 @@ RSpec.describe Einvoicing do
   let(:buyer) do
     Einvoicing::Party.new(
       name: "Client SA", siren: "356000000", siret: "35600000000048",
-      vat_number: "FR83356000000", street: "9 rue du Temple",
+      vat_number: "FR39356000000", street: "9 rue du Temple",
       city: "Paris", postal_code: "75004", country_code: "FR",
       email: "billing@client.fr"
     )

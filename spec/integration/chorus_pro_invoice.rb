@@ -15,7 +15,7 @@ require_relative "../../lib/einvoicing"
 require "hexapdf"
 
 # Sandbox SIRETs from Chorus Pro qualif dataset
-SELLER_SIRET = "37064704857900"
+SELLER_SIRET = "37064704200008"
 BUYER_SIRET  = "14543984084108"
 
 pdf = HexaPDF::Document.new
@@ -34,9 +34,9 @@ seller = Einvoicing::Party.new(
   city:         "Paris",
   postal_code:  "75001",
   country_code: "FR",
-  siren:        "370647048",
+  siren:        "370647042",
   siret:        SELLER_SIRET,
-  vat_number:   "FR00370647048"
+  vat_number:   "FR68370647042"
 )
 
 buyer = Einvoicing::Party.new(

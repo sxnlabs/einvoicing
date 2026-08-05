@@ -103,15 +103,38 @@ module Einvoicing
       # Validate a VAT number against the format of the country it belongs to.
       # The party's own country wins when known, so a French party still has to
       # carry an FR number; otherwise the number's own prefix decides.
-      # @param vat [String] e.g. "FR12123456789", "DE811907980"
+      # @param vat [String] e.g. "FR11123456782", "DE811907980"
       # @param country_code [String, nil] the party's country (BT-40 / BT-55)
       # @return [Boolean]
       def self.valid_vat_number?(vat, country_code: nil)
         str = vat.to_s.gsub(/\s/, "").upcase
-        pattern = EU_VAT_PATTERNS[country_code.to_s.upcase] || EU_VAT_PATTERNS[str[0, 2]]
-        return str.match?(pattern) if pattern
+        country = country_code.to_s.upcase
+        country = str[0, 2].to_s unless EU_VAT_PATTERNS.key?(country)
 
-        str.match?(NON_EU_VAT_RE)
+        pattern = EU_VAT_PATTERNS[country]
+        return str.match?(NON_EU_VAT_RE) unless pattern
+        return false unless str.match?(pattern)
+
+        country == "FR" ? valid_fr_vat_number?(str) : true
+      end
+
+      # A French VAT number carries a check key over its SIREN, so a typo that
+      # keeps the shape still has to be caught: FR83552032534 looks right and
+      # is not (the key for that SIREN is 27).
+      #
+      # The official structure is "FR" + 2 characters + 9 digits, and those two
+      # characters may be alphanumeric. Only a numeric key comes from the
+      # published formula, so an alphanumeric one is checked on its shape and
+      # on its SIREN alone — rejecting it would refuse valid invoices.
+      # @param vat [String] already stripped and upcased, matching VAT_RE
+      # @return [Boolean]
+      def self.valid_fr_vat_number?(vat)
+        key   = vat[2, 2]
+        siren = vat[4, 9]
+        return false unless valid_siren?(siren)
+        return true unless key.match?(/\A\d{2}\z/)
+
+        key.to_i == (12 + (3 * (siren.to_i % 97))) % 97
       end
 
       # A known French VAT rate, including the DOM and Corsican rates that the

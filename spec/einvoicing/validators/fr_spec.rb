@@ -43,11 +43,35 @@ RSpec.describe Einvoicing::Validators::FR do
 
   describe ".valid_vat_number?" do
     it "accepts a valid French VAT number" do
-      expect(described_class.valid_vat_number?("FR83356000000")).to be true
+      expect(described_class.valid_vat_number?("FR39356000000")).to be true
     end
 
     it "accepts VAT numbers with alphanumeric keys" do
       expect(described_class.valid_vat_number?("FRK7356000000")).to be true
+    end
+
+    it "rejects a French VAT number whose check key does not match its SIREN" do
+      # Right shape, right SIREN, wrong key: the key for 552032534 is 27.
+      expect(described_class.valid_vat_number?("FR83552032534")).to be false
+      expect(described_class.valid_vat_number?("FR27552032534")).to be true
+    end
+
+    it "checks the key against the SIREN, not against the digits alone" do
+      # Same SIREN, every wrong numeric key must be refused.
+      valid = "FR39356000000"
+      wrong = (0..96).map { |k| format("FR%02d356000000", k) }.reject { |v| v == valid }
+
+      expect(wrong.select { |v| described_class.valid_vat_number?(v) }).to be_empty
+    end
+
+    it "rejects a French VAT number carrying a SIREN that fails Luhn" do
+      # 123456789 is not a real SIREN; no key can rescue it.
+      expect(described_class.valid_vat_number?("FR32123456789")).to be false
+    end
+
+    it "does not apply the French key rule to another member state" do
+      # DE811907980 has no such key; validating it as French would break it.
+      expect(described_class.valid_vat_number?("DE811907980", country_code: "DE")).to be true
     end
 
     it "rejects a VAT number without FR prefix" do

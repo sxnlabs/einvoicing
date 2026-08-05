@@ -7,8 +7,8 @@ module Einvoicing
   # Core invoice model. All monetary values are in the invoice currency.
   #
   # @example
-  #   seller = Einvoicing::Party.new(name: "Acme SAS", siren: "123456789", vat_number: "FR12123456789")
-  #   buyer  = Einvoicing::Party.new(name: "Client SA", siren: "987654321")
+  #   seller = Einvoicing::Party.new(name: "Acme SAS", siren: "123456782", vat_number: "FR11123456782")
+  #   buyer  = Einvoicing::Party.new(name: "Client SA", siren: "987654316")
   #   line   = Einvoicing::LineItem.new(description: "Consulting", quantity: 1, unit_price: 1000.00)
   #
   #   invoice = Einvoicing::Invoice.new(

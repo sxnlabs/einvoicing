@@ -17,12 +17,12 @@ fr:
         name_missing: "Le nom du vendeur est requis"
         siren_invalid: "Le SIREN du vendeur doit comporter 9 chiffres (vérification Luhn échouée)"
         siret_invalid: "Le SIRET du vendeur doit comporter 14 chiffres (vérification Luhn échouée)"
-        vat_number_invalid: "Le format du numéro de TVA du vendeur est invalide pour son préfixe pays"
+        vat_number_invalid: "Le numéro de TVA du vendeur est invalide pour son pays (format, ou clé de contrôle pour la France)"
       buyer:
         name_missing: "Le nom de l'acheteur est requis"
         siren_invalid: "Le SIREN de l'acheteur doit comporter 9 chiffres (vérification Luhn échouée)"
         siret_invalid: "Le SIRET de l'acheteur doit comporter 14 chiffres (vérification Luhn échouée)"
-        vat_number_invalid: "Le format du numéro de TVA de l'acheteur est invalide pour son préfixe pays"
+        vat_number_invalid: "Le numéro de TVA de l'acheteur est invalide pour son pays (format, ou clé de contrôle pour la France)"
       line:
         description_missing: "Ligne %{index} : la description est requise"
         quantity_invalid: "Ligne %{index} : la quantité doit être positive"
