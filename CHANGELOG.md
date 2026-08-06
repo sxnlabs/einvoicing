@@ -7,10 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.1] - 2026-08-06
+
 ### Added
 - Link to the online Factur-X validator in the README — runs entirely client-side with no upload required
-
-## [0.9.1] - 2026-08-06
 
 ### Fixed
 - French VAT numbers are now checked against their control key, not just their shape. `FR83552032534` has the right form and the right SIREN but the wrong key (it is 27), and the validator accepted it — a number that VIES and any tax administration rejects. The key is derived as `(12 + 3 × (SIREN mod 97)) mod 97` and the embedded SIREN must pass Luhn
