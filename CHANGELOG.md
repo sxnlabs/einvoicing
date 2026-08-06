@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Link to the online Factur-X validator in the README — runs entirely client-side with no upload required
 
 ### Fixed
+- CII no longer emits an empty `ram:BuyerReference` when no payment reference is set. It falls back to the invoice number, as UBL already did — the two formats produced different documents for the same invoice, and an empty BT-10 is rejected by Chorus Pro, which requires it
 - French VAT numbers are now checked against their control key, not just their shape. `FR83552032534` has the right form and the right SIREN but the wrong key (it is 27), and the validator accepted it — a number that VIES and any tax administration rejects. The key is derived as `(12 + 3 × (SIREN mod 97)) mod 97` and the embedded SIREN must pass Luhn
 - The official French structure is `FR` + 2 characters + 9 digits, and those two characters may be alphanumeric. Only a numeric key follows the published formula, so an alphanumeric one is still accepted on its shape and its SIREN — refusing it would reject valid invoices
 - Every French identifier used in the test fixtures, the sample scripts and the documented examples was regenerated: all but one carried an invalid check key or a SIREN failing Luhn, which is precisely why the gap went unnoticed
