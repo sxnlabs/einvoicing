@@ -116,7 +116,9 @@ module Einvoicing
       def self.header_trade_agreement(b, invoice, profile)
         b.tag("ram:ApplicableHeaderTradeAgreement") do
           # BuyerReference must be first in the sequence (EN 16931 BR-10 / XSD order).
-          b.text("ram:BuyerReference", invoice.payment_reference || "")
+          # Falls back to the invoice number like UBL does: an empty element is
+          # worse than either value, and BT-10 is mandatory for Chorus Pro.
+          b.text("ram:BuyerReference", invoice.payment_reference || invoice.invoice_number)
           b.tag("ram:SellerTradeParty") { party_xml(b, invoice.seller, profile) }
           b.tag("ram:BuyerTradeParty")  { party_xml(b, invoice.buyer, profile) }
         end

@@ -26,6 +26,27 @@ RSpec.describe Einvoicing::Formats::CII do
     expect(xml).to include("urn:cen.eu:en16931:2017")
   end
 
+  describe "BuyerReference (BT-10)" do
+    it "falls back to the invoice number rather than emitting an empty element" do
+      no_reference = Fixtures.invoice.with(payment_reference: nil)
+
+      expect(described_class.generate(no_reference))
+        .to include("<ram:BuyerReference>#{no_reference.invoice_number}</ram:BuyerReference>")
+    end
+
+    it "matches what UBL emits for the same invoice" do
+      no_reference = Fixtures.invoice.with(payment_reference: nil)
+      cii = described_class.generate(no_reference)[%r{<ram:BuyerReference>([^<]*)</ram:BuyerReference>}, 1]
+      ubl = Einvoicing::Formats::UBL.generate(no_reference)[%r{<cbc:BuyerReference>([^<]*)</cbc:BuyerReference>}, 1]
+
+      expect(cii).to eq(ubl)
+    end
+
+    it "keeps the payment reference when one is given" do
+      expect(xml).to include("<ram:BuyerReference>#{invoice.payment_reference}</ram:BuyerReference>")
+    end
+  end
+
   it "includes the invoice number" do
     expect(xml).to include("INV-2024-001")
   end
