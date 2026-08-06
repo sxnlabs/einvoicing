@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.2] - 2026-08-06
+
+### Fixed
+- CII announced a SIRET under `schemeID="0002"`, which is SIRENE — the nine-digit SIREN. A fourteen-digit SIRET now goes out as `0009`, the ISO 6523 code that actually labels it. Neither the XSD nor the EN 16931 Schematron catches the mismatch, because both values are just strings to them; a Plateforme Agréée checks it, and refuses the document. Chorus Pro keeps the literal `SIRET` scheme it predates the codelist with
+
 ## [0.9.1] - 2026-08-06
 
 ### Added

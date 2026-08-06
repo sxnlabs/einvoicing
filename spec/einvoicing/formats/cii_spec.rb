@@ -76,6 +76,35 @@ RSpec.describe Einvoicing::Formats::CII do
     expect(xml).to include("356000000")
   end
 
+  # ISO 6523: 0002 is SIRENE — the nine-digit SIREN. A fourteen-digit SIRET
+  # announced under it is what a Plateforme Agréée refuses the document for,
+  # and our own XSD does not catch it because both are just strings.
+  context "when a party carries a SIRET" do
+    let(:seller_with_siret) do
+      Einvoicing::Party.new(name: "Acme SAS", siret: "35600000000048",
+                            vat_number: "FR39356000000", country_code: "FR")
+    end
+    let(:siret_xml) do
+      described_class.generate(invoice.with(seller: seller_with_siret))
+    end
+
+    it "announces it as 0009, not as 0002" do
+      expect(siret_xml).to include('schemeID="0009"')
+      expect(siret_xml).to include("35600000000048")
+    end
+
+    it "still announces a SIREN-only party as 0002" do
+      expect(siret_xml).to include('schemeID="0002"')
+    end
+
+    it "keeps the literal SIRET scheme for Chorus Pro, which predates the codelist" do
+      chorus = described_class.generate(invoice.with(seller: seller_with_siret), profile: :chorus_pro)
+
+      expect(chorus).to include('schemeID="SIRET"')
+      expect(chorus).not_to include('schemeID="0009"')
+    end
+  end
+
   it "includes seller VAT number" do
     expect(xml).to include("FR39356000000")
   end

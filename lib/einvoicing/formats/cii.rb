@@ -125,13 +125,27 @@ module Einvoicing
       end
       private_class_method :header_trade_agreement
 
+      # ISO 6523 identifier scheme for a French legal registration (BT-30 /
+      # BT-47). The code has to match the *length* of the number it labels:
+      # 0002 is SIRENE, which is the 9-digit SIREN, and a 14-digit SIRET
+      # announced as 0002 is what a Plateforme Agréée rejects the document for.
+      # Chorus Pro predates the codelist and wants the literal word instead.
+      SIREN_SCHEME = "0002"
+      SIRET_SCHEME = "0009"
+
+      def self.legal_id_scheme(party, profile)
+        return "SIRET" if profile == :chorus_pro && party.siret
+
+        party.siret ? SIRET_SCHEME : SIREN_SCHEME
+      end
+      private_class_method :legal_id_scheme
+
       def self.party_xml(b, party, profile)
         b.text("ram:Name", party.name)
         legal_id = party.siret || party.siren
         if legal_id
           b.tag("ram:SpecifiedLegalOrganization") do
-            scheme = (profile == :chorus_pro && party.siret) ? "SIRET" : "0002"
-            b.text("ram:ID", legal_id, "schemeID" => scheme)
+            b.text("ram:ID", legal_id, "schemeID" => legal_id_scheme(party, profile))
           end
         end
         b.tag("ram:PostalTradeAddress") do
