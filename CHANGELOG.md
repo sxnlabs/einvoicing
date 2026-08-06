@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Link to the online Factur-X validator in the README — runs entirely client-side with no upload required
+
 ## [0.9.0] - 2026-08-05
 
 Everything here comes from a batch of 15 deliberately hostile Factur-X invoices
