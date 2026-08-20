@@ -1,0 +1,38 @@
+name: Garde-fou CI
+
+# Ne se declenche que lorsqu'un workflow est touche. Le reste du temps il ne
+# consomme rien : c'est un garde-fou, pas une etape de build.
+#
+# Ce qu'il empeche : qu'un job reparte sans `timeout-minutes`. GitHub applique
+# alors 360 minutes, et facture les 360. Les 19 et 20 aout 2026, seize jobs se
+# sont figes sur `apt-get` dans deux depots : 5 834 minutes, 35 $. Le meme
+# incident sur un runner macOS avait coute 67 $ en debut de mois.
+#
+# C'est la deuxieme des quatre defenses. La premiere est le `timeout-minutes`
+# lui-meme ; la troisieme la sentinelle Hermes, qui annule ce qui tourne trop
+# longtemps quel que soit le depot ; la quatrieme le plafond de depense de
+# l'org. Voir Hermes : ci_couts_github_actions.md
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/**"
+  push:
+    branches: [main, master]
+    paths:
+      - ".github/workflows/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  timeouts:
+    name: Chaque job est borne
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      # python3 est preinstalle : pas de setup, pas d'apt, rien qui puisse se
+      # figer. Le garde-fou rend son verdict en deux secondes.
+      - run: python3 script/ci-timeout-guard.py
