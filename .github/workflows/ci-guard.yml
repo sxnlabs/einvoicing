@@ -17,10 +17,16 @@ on:
   pull_request:
     paths:
       - ".github/workflows/**"
+      # Le verificateur lui-meme : sans cette ligne, l'affaiblir passe sans
+      # jamais etre execute, et les workflows suivants echappent au controle.
+      - "script/ci-timeout-guard.py"
   push:
     branches: [main, master]
     paths:
       - ".github/workflows/**"
+      # Le verificateur lui-meme : sans cette ligne, l'affaiblir passe sans
+      # jamais etre execute, et les workflows suivants echappent au controle.
+      - "script/ci-timeout-guard.py"
   workflow_dispatch:
 
 permissions:

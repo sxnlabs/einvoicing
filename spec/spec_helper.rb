@@ -19,7 +19,11 @@ SimpleCov.start do
   # Coverage module produces is not identical across Ruby versions, and with
   # four branches of headroom the 3.2 leg could drop under the floor without a
   # line of code changing.
-  full_run = ARGV.none? { |argument| argument.start_with?("spec/") }
+  # Any argument at all means a partial run: a file, an absolute path from an
+  # editor, `-e "example name"`, `-t @tag`. Testing for a "spec/" prefix missed
+  # every form but the first and gated a filtered subset against the whole
+  # suite's floor.
+  full_run = ARGV.empty?
   gated = ENV["CI"] ? ENV["COVERAGE_GATE"] == "1" : true
 
   minimum_coverage line: 90, branch: 76 if full_run && gated
