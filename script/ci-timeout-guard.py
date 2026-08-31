@@ -47,6 +47,8 @@ def audit(path: Path, ceiling: int) -> list[str]:
         (l for l in lines[jobs_at + 1:] if l.strip() and not l.lstrip().startswith("#")),
         None,
     )
+    # first_body est calcule avant jobs_end : il sert a deduire l'indentation,
+    # et si le bloc est vide les deux echouent de la meme facon.
     if first_body is None:
         return problems
 
@@ -56,7 +58,23 @@ def audit(path: Path, ceiling: int) -> list[str]:
 
     job_key_re = re.compile(JOB_KEY_TEMPLATE.format(indent=re.escape(indent)))
 
-    starts = [n for n in range(jobs_at + 1, len(lines)) if job_key_re.match(lines[n])]
+    # Le mapping `jobs:` s'arrete a la premiere cle de premier niveau qui le
+    # suit. YAML autorise `permissions:` ou `env:` apres lui, et sans cette
+    # borne le corps du dernier job court jusqu'a la fin du fichier : son
+    # indentation minimale tombe a zero, les controles ne trouvent alors ni
+    # `runs-on` ni `timeout-minutes`, et le job est saute en silence.
+    jobs_end = next(
+        (
+            n
+            for n in range(jobs_at + 1, len(lines))
+            if lines[n].strip()
+            and not lines[n].startswith((" ", "\t"))
+            and not lines[n].lstrip().startswith("#")
+        ),
+        len(lines),
+    )
+
+    starts = [n for n in range(jobs_at + 1, jobs_end) if job_key_re.match(lines[n])]
     # Un `jobs:` sans job reconnu veut dire que l'analyse a echoue, pas que le
     # fichier est sain. C'est le mode de defaillance le plus dangereux ici :
     # silencieux et vert.
@@ -64,7 +82,7 @@ def audit(path: Path, ceiling: int) -> list[str]:
         return [f"{path}: bloc `jobs:` present mais aucun job reconnu — analyse a revoir"]
 
     for i, start in enumerate(starts):
-        end = starts[i + 1] if i + 1 < len(starts) else len(lines)
+        end = starts[i + 1] if i + 1 < len(starts) else jobs_end
         body = lines[start:end]
         name = job_key_re.match(lines[start]).group(1)
         where = f"{path}:{start + 1} (job `{name}`)"
