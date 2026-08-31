@@ -23,7 +23,10 @@ import re
 import sys
 from pathlib import Path
 
-JOBS_RE = re.compile(r"^jobs:[ \t]*(#.*)?$")
+# YAML accepte `jobs:`, `"jobs":`, `'jobs':` et `jobs :` : GitHub lit les quatre
+# comme la meme cle. N'en reconnaitre qu'une seule faisait sortir le script en
+# vert sans avoir regarde un seul job.
+JOBS_RE = re.compile(r"^[\"']?jobs[\"']?[ \t]*:[ \t]*(#.*)?$")
 # L'indentation sous `jobs:` n'est pas imposee par YAML : deux espaces est
 # l'usage, quatre est accepte par GitHub. Le motif se construit sur ce que le
 # fichier utilise vraiment, sinon aucun job n'est vu et tout passe au vert.
@@ -40,8 +43,11 @@ def audit(path: Path, ceiling: int) -> list[str]:
     problems: list[str] = []
 
     jobs_at = next((n for n, l in enumerate(lines) if JOBS_RE.match(l)), None)
+    # Fail closed. Un fichier de workflow sans bloc `jobs:` reconnu veut dire que
+    # l'analyse a echoue, pas que le fichier est sain — et un verdict vert sur un
+    # fichier jamais examine est exactement ce que ce garde-fou doit empecher.
     if jobs_at is None:
-        return problems
+        return [f"{path}: aucun bloc `jobs:` reconnu — analyse a revoir"]
 
     first_body = next(
         (l for l in lines[jobs_at + 1:] if l.strip() and not l.lstrip().startswith("#")),
