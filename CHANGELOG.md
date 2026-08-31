@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.9.3] - 2026-08-31
 
 ### Fixed
 - Declare `bigdecimal` and `rexml` as runtime dependencies. Both are required from `lib/` but neither was declared, so `require "einvoicing"` raised `LoadError: cannot load such file -- bigdecimal` in any consumer bundle that did not carry them, and Peppol validation failed on `rexml/document`. `rexml` is floored at 3.3.6, the release that fixed its parsing DoS.
