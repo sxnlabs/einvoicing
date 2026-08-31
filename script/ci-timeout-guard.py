@@ -24,8 +24,11 @@ import sys
 from pathlib import Path
 
 JOBS_RE = re.compile(r"^jobs:[ \t]*(#.*)?$")
-JOB_KEY_RE = re.compile(r"^  ([A-Za-z0-9_-]+):[ \t]*(#.*)?$")
-TIMEOUT_RE = re.compile(r"^\s+timeout-minutes:[ \t]*(\S+)")
+# L'indentation sous `jobs:` n'est pas imposee par YAML : deux espaces est
+# l'usage, quatre est accepte par GitHub. Le motif se construit sur ce que le
+# fichier utilise vraiment, sinon aucun job n'est vu et tout passe au vert.
+JOB_KEY_TEMPLATE = r"^{indent}([A-Za-z0-9_-]+):[ \t]*(#.*)?$"
+TIMEOUT_RE = re.compile(r"^([ \t]*)timeout-minutes:[ \t]*(\S+)")
 # Un job qui delegue a un workflow reutilisable ne porte pas son propre
 # `runs-on` : le timeout vit dans le workflow appele, pas ici.
 USES_WORKFLOW_RE = re.compile(r"^\s+uses:[ \t]*\S+\.ya?ml(@\S+)?[ \t]*$")
@@ -40,11 +43,30 @@ def audit(path: Path, ceiling: int) -> list[str]:
     if jobs_at is None:
         return problems
 
-    starts = [n for n in range(jobs_at + 1, len(lines)) if JOB_KEY_RE.match(lines[n])]
+    first_body = next(
+        (l for l in lines[jobs_at + 1:] if l.strip() and not l.lstrip().startswith("#")),
+        None,
+    )
+    if first_body is None:
+        return problems
+
+    indent = first_body[: len(first_body) - len(first_body.lstrip())]
+    if not indent:
+        return [f"{path}: bloc `jobs:` dont les entrees ne sont pas indentees"]
+
+    job_key_re = re.compile(JOB_KEY_TEMPLATE.format(indent=re.escape(indent)))
+
+    starts = [n for n in range(jobs_at + 1, len(lines)) if job_key_re.match(lines[n])]
+    # Un `jobs:` sans job reconnu veut dire que l'analyse a echoue, pas que le
+    # fichier est sain. C'est le mode de defaillance le plus dangereux ici :
+    # silencieux et vert.
+    if not starts:
+        return [f"{path}: bloc `jobs:` present mais aucun job reconnu — analyse a revoir"]
+
     for i, start in enumerate(starts):
         end = starts[i + 1] if i + 1 < len(starts) else len(lines)
         body = lines[start:end]
-        name = JOB_KEY_RE.match(lines[start]).group(1)
+        name = job_key_re.match(lines[start]).group(1)
         where = f"{path}:{start + 1} (job `{name}`)"
 
         if any(USES_WORKFLOW_RE.match(l) for l in body):
@@ -52,12 +74,26 @@ def audit(path: Path, ceiling: int) -> list[str]:
         if not any(RUNS_ON_RE.match(l) for l in body):
             continue
 
-        found = next((TIMEOUT_RE.match(l) for l in body if TIMEOUT_RE.match(l)), None)
+        # Seul un `timeout-minutes` au niveau du job borne le job. Le meme mot
+        # sous une etape ne borne que l'etape : le job continue de tourner, et
+        # c'est exactement l'incident des 19-20 aout.
+        key_indent = min(
+            (len(l) - len(l.lstrip()) for l in body[1:] if l.strip() and not l.lstrip().startswith("#")),
+            default=None,
+        )
+        found = next(
+            (
+                m
+                for l in body
+                if (m := TIMEOUT_RE.match(l)) and len(m.group(1)) == key_indent
+            ),
+            None,
+        )
         if not found:
-            problems.append(f"{where} : pas de `timeout-minutes`, donc 6 h et 2,16 $ s'il se fige")
+            problems.append(f"{where} : pas de `timeout-minutes` au niveau du job, donc 6 h et 2,16 $ s'il se fige")
             continue
 
-        raw = found.group(1)
+        raw = found.group(2)
         # Une expression `${{ ... }}` est legitime mais illisible ici : on la
         # laisse passer plutot que d'inventer sa valeur.
         if raw.startswith("${{"):

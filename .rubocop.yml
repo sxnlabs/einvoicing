@@ -36,7 +36,8 @@ RSpec/SpecFilePathFormat:
   Enabled: false
 RSpec/IteratedExpectation:
   Enabled: false
-# The packaging spec checks the gemspec against lib/, not a class.
+# These specs check packaging and locale files, not a class.
 RSpec/DescribeClass:
   Exclude:
     - "spec/runtime_dependencies_spec.rb"
+    - "spec/locales_spec.rb"
