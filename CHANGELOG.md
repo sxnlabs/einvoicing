@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Declare `bigdecimal` and `rexml` as runtime dependencies. Both are required from `lib/` but neither was declared, so `require "einvoicing"` raised `LoadError: cannot load such file -- bigdecimal` in any consumer bundle that did not carry them, and Peppol validation failed on `rexml/document`. `rexml` is floored at 3.3.6, the release that fixed its parsing DoS.
+
 ## [0.9.2] - 2026-08-06
 
 ### Fixed
