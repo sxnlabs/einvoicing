@@ -31,8 +31,8 @@ JOB_KEY_TEMPLATE = r"^{indent}([A-Za-z0-9_-]+):[ \t]*(#.*)?$"
 TIMEOUT_RE = re.compile(r"^([ \t]*)timeout-minutes:[ \t]*(\S+)")
 # Un job qui delegue a un workflow reutilisable ne porte pas son propre
 # `runs-on` : le timeout vit dans le workflow appele, pas ici.
-USES_WORKFLOW_RE = re.compile(r"^\s+uses:[ \t]*\S+\.ya?ml(@\S+)?[ \t]*$")
-RUNS_ON_RE = re.compile(r"^\s+runs-on:")
+USES_WORKFLOW_RE = re.compile(r"^([ \t]*)uses:[ \t]*\S+\.ya?ml(@\S+)?[ \t]*$")
+RUNS_ON_RE = re.compile(r"^([ \t]*)runs-on:")
 
 
 def audit(path: Path, ceiling: int) -> list[str]:
@@ -69,18 +69,25 @@ def audit(path: Path, ceiling: int) -> list[str]:
         name = job_key_re.match(lines[start]).group(1)
         where = f"{path}:{start + 1} (job `{name}`)"
 
-        if any(USES_WORKFLOW_RE.match(l) for l in body):
-            continue
-        if not any(RUNS_ON_RE.match(l) for l in body):
-            continue
-
-        # Seul un `timeout-minutes` au niveau du job borne le job. Le meme mot
-        # sous une etape ne borne que l'etape : le job continue de tourner, et
-        # c'est exactement l'incident des 19-20 aout.
+        # L'indentation des cles du job. Tout ce qui suit se lit a ce niveau et
+        # a ce niveau seulement : une ligne `uses: generated.yml` au fond d'un
+        # bloc de script ne fait pas du job un appel de workflow reutilisable,
+        # et un `timeout-minutes` sous une etape ne borne que l'etape — le job,
+        # lui, continue de tourner. C'est exactement l'incident des 19-20 aout.
         key_indent = min(
             (len(l) - len(l.lstrip()) for l in body[1:] if l.strip() and not l.lstrip().startswith("#")),
             default=None,
         )
+
+        def at_job_level(pattern):
+            return any(
+                (m := pattern.match(l)) and len(m.group(1)) == key_indent for l in body
+            )
+
+        if at_job_level(USES_WORKFLOW_RE):
+            continue
+        if not at_job_level(RUNS_ON_RE):
+            continue
         found = next(
             (
                 m
