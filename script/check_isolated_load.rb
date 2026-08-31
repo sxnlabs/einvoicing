@@ -97,9 +97,15 @@ Dir.mktmpdir("isolated-load") do |dir|
   # `Dir["config/locales/*.yml"]` from s.files leaves every require working and
   # every spec green — the locale specs read the checkout, not the package —
   # while I18n.load_path takes an empty glob and consumers get "translation
-  # missing" everywhere. Extend this list when lib/ starts reading another
-  # non-Ruby asset at runtime.
-  runtime_assets = [ "config/locales/*.yml" ]
+  # missing" everywhere. Same for the sRGB profile facturx.rb:169 embeds in
+  # every PDF/A-3 it produces.
+  #
+  # Extend this list when lib/ starts reading another non-Ruby asset at runtime.
+  # lib/**/*.xsd is deliberately absent: the Factur-X schemas are read only by
+  # spec/support/schema_validation.rb, never by lib/, so the published gem is
+  # right to leave them out. A glob with no match in the checkout is skipped,
+  # which is what keeps *.xslt here harmless — peppol.rb downloads it on demand.
+  runtime_assets = [ "config/locales/*.yml", "lib/**/*.icc", "lib/**/*.xslt" ]
   missing_assets = runtime_assets.reject do |glob|
     Dir[File.join(project, glob)].empty? || Dir[File.join(root, glob)].any?
   end
