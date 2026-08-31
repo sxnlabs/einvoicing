@@ -93,6 +93,28 @@ Dir.mktmpdir("isolated-load") do |dir|
   end
   File.write(File.join(root, "#{spec.name}.gemspec"), spec_source)
 
+  # Loading the gem does not prove its runtime assets shipped. Dropping
+  # `Dir["config/locales/*.yml"]` from s.files leaves every require working and
+  # every spec green — the locale specs read the checkout, not the package —
+  # while I18n.load_path takes an empty glob and consumers get "translation
+  # missing" everywhere. Extend this list when lib/ starts reading another
+  # non-Ruby asset at runtime.
+  runtime_assets = [ "config/locales/*.yml" ]
+  missing_assets = runtime_assets.reject do |glob|
+    Dir[File.join(project, glob)].empty? || Dir[File.join(root, glob)].any?
+  end
+
+  unless missing_assets.empty?
+    warn <<~MSG
+      FAIL — the built package is missing runtime assets: #{missing_assets.join(', ')}.
+
+      The files exist in the checkout but s.files does not select them, so the
+      published gem ships without them. Nothing else catches this: the code
+      still loads, and the specs read the checkout rather than the package.
+    MSG
+    next
+  end
+
   File.write(env["BUNDLE_GEMFILE"], <<~RUBY_GEMFILE)
     source "https://rubygems.org"
     gem #{spec.name.inspect}, path: #{root.inspect}
