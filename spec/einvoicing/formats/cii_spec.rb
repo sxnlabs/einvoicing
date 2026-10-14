@@ -491,4 +491,49 @@ RSpec.describe Einvoicing::Formats::CII do
       expect(xml).to include("552032534")
     end
   end
+
+  # BT-146 is a price, not an amount: EN 16931 holds amounts to two decimals
+  # but not prices. 1 512 000 eggs at 0.0095 € make 14 364.00 €, and a price
+  # written as 0.01 would contradict that line total.
+  describe "item net price (BT-146)" do
+    def price_line(unit_price, quantity: 1)
+      described_class.generate(
+        Fixtures.invoice(lines: [ Einvoicing::LineItem.new(
+          description: "Eggs", quantity: quantity, unit_price: unit_price, vat_rate: 0.055
+        ) ])
+      )
+    end
+
+    def charge_amount(xml)
+      xml[%r{<ram:NetPriceProductTradePrice>\s*<ram:ChargeAmount>([^<]*)</ram:ChargeAmount>}, 1]
+    end
+
+    it "keeps the decimals of a sub-cent price" do
+      xml = price_line(BigDecimal("0.0095"), quantity: 1_512_000)
+
+      expect(charge_amount(xml)).to eq("0.0095")
+      expect(xml).to include("<ram:LineTotalAmount>14364.00</ram:LineTotalAmount>")
+    end
+
+    it "writes at least two decimals" do
+      expect(charge_amount(price_line(BigDecimal("14")))).to eq("14.00")
+      expect(charge_amount(price_line(BigDecimal("14.5")))).to eq("14.50")
+    end
+
+    it "rounds beyond seven decimals" do
+      expect(charge_amount(price_line(BigDecimal("0.123456789")))).to eq("0.1234568")
+    end
+
+    it "keeps every amount at two decimals" do
+      xml = price_line(BigDecimal("0.0095"), quantity: 1_512_000)
+
+      expect(xml).to include("<ram:TaxBasisTotalAmount>14364.00</ram:TaxBasisTotalAmount>")
+      expect(xml).to include("<ram:GrandTotalAmount>15154.02</ram:GrandTotalAmount>")
+    end
+
+    it "stays XSD-valid" do
+      errors = validate_against_xsd(price_line(BigDecimal("0.0095"), quantity: 1_512_000), "EN16931")
+      expect(errors).to be_empty, "XSD errors: #{errors.map(&:message).join(', ')}"
+    end
+  end
 end

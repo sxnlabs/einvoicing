@@ -229,7 +229,7 @@ module Einvoicing
             end
           end
           b.tag("cac:Price") do
-            b.text("cbc:PriceAmount", format_amount(line.unit_price),
+            b.text("cbc:PriceAmount", format_price(line.unit_price),
                    "currencyID" => currency)
           end
         end
@@ -275,6 +275,16 @@ module Einvoicing
         format("%.2f", value)
       end
       private_class_method :format_amount
+
+      # Unit prices (BT-146) are not amounts: EN 16931 holds amounts to two
+      # decimals but sets no such limit on prices, and a sub-cent price written
+      # as 0.01 contradicts its own line total. Keep up to seven decimals, drop
+      # trailing zeros, never write fewer than two.
+      def self.format_price(value)
+        whole, fraction = BigDecimal(value.to_s).round(7, :half_up).to_s("F").split(".")
+        "#{whole}.#{fraction.sub(/0+\z/, "").ljust(2, "0")}"
+      end
+      private_class_method :format_price
 
       def self.format_quantity(value)
         v = value.to_f
