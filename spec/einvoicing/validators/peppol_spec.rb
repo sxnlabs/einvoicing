@@ -70,6 +70,20 @@ RSpec.describe Einvoicing::Validators::Peppol do
       expect(errors).to be_empty, "Expected 0 Peppol errors, got: #{errors.map { |e| e[:field] }.join(', ')}"
     end
 
+    it "accepts prices and quantities whose line total needs all of their decimals" do
+      lines = [
+        Einvoicing::LineItem.new(description: "Long price", quantity: 450_000,
+          unit_price: BigDecimal("1.000000051"), vat_rate: BigDecimal("0.20")),
+        Einvoicing::LineItem.new(description: "Long quantity", quantity: BigDecimal("8.915839"),
+          unit_price: BigDecimal("833.42574"), vat_rate: BigDecimal("0.20"))
+      ]
+      errors = described_class.validate_ubl(
+        Einvoicing::Formats::UBL.generate(peppol_invoice.with(lines: lines))
+      )
+
+      expect(errors).to be_empty, "Expected 0 Peppol errors, got: #{errors.map { |e| e[:field] }.join(', ')}"
+    end
+
     it "returns errors for malformed XML" do
       errors = described_class.validate_ubl("<not-ubl/>")
       expect(errors).to be_an(Array)

@@ -8,7 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.9.4] - 2026-10-14
 
 ### Fixed
-- Unit prices kept only two decimals. The item net price (BT-146) went out through the same `%.2f` as every amount, so a line of 1 512 000 eggs at 0.0095 € said `0.01` in `ram:ChargeAmount` (CII) and `cbc:PriceAmount` (UBL) while its line total said 14 364.00 €: 756 € off, and the Peppol rule PEPPOL-EN16931-R120 rejects the UBL. EN 16931 holds amounts to two decimals but sets no such limit on prices: a price now keeps up to seven decimals, drops trailing zeros and never shows fewer than two (`0.0095`, `14.00`, `14.50`). Every amount stays at two decimals
+- Unit prices kept only two decimals. The item net price (BT-146) went out through the same `%.2f` as every amount, so a line of 1 512 000 eggs at 0.0095 € said `0.01` in `ram:ChargeAmount` (CII) and `cbc:PriceAmount` (UBL) while its line total said 14 364.00 €: 756 € off, and the Peppol rule PEPPOL-EN16931-R120 rejects the UBL. EN 16931 holds amounts to two decimals but sets no such limit on prices: a price now keeps every decimal it carries and never shows fewer than two (`0.0095`, `14.00`, `14.50`). Every amount stays at two decimals
+- Quantities (BT-129) went through `Float` and four decimals, so `8.915839` came out as `8.9158` while the line total used the real quantity. They are now written from the `BigDecimal` with every decimal (`5`, `2.5`, `8.915839`)
 
 ## [0.9.3] - 2026-08-31
 
