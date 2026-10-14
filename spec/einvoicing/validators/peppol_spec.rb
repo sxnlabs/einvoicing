@@ -58,6 +58,18 @@ RSpec.describe Einvoicing::Validators::Peppol do
       expect(errors.map { |e| e[:message] }).to include(match(/electronic address/i))
     end
 
+    # PEPPOL-EN16931-R120: the line net amount must equal quantity x price
+    # within 0.02. A price rounded to 0.01 misses 14 364.00 by 756 €.
+    it "accepts a sub-cent price whose line total depends on its decimals" do
+      line = Einvoicing::LineItem.new(description: "Eggs", quantity: 1_512_000,
+        unit_price: BigDecimal("0.0095"), vat_rate: BigDecimal("0.055"))
+      errors = described_class.validate_ubl(
+        Einvoicing::Formats::UBL.generate(peppol_invoice.with(lines: [ line ]))
+      )
+
+      expect(errors).to be_empty, "Expected 0 Peppol errors, got: #{errors.map { |e| e[:field] }.join(', ')}"
+    end
+
     it "returns errors for malformed XML" do
       errors = described_class.validate_ubl("<not-ubl/>")
       expect(errors).to be_an(Array)

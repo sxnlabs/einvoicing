@@ -69,6 +69,14 @@ lines = [
     quantity:    3,
     unit_price:  250.00,
     vat_rate:    0.20
+  ),
+  # A sub-cent unit price (BT-146): its line total only holds with all of its
+  # decimals, so Mustang's EN 16931 checks see the price formatting
+  Einvoicing::LineItem.new(
+    description: "Appels API facturés à l'unité",
+    quantity:    120_000,
+    unit_price:  "0.0095",
+    vat_rate:    0.20
   )
 ]
 
@@ -97,6 +105,10 @@ puts "CII XML written to #{XML_PATH}"
 
 def money(amount)
   format("%.2f EUR", amount)
+end
+
+def price(amount)
+  amount == amount.round(2) ? money(amount) : "#{amount.to_s("F")} EUR"
 end
 
 pdf = Prawn::Document.new(page_size: "A4", margin: [ 40, 40, 40, 40 ]) do |d|
@@ -141,7 +153,7 @@ pdf = Prawn::Document.new(page_size: "A4", margin: [ 40, 40, 40, 40 ]) do |d|
     [
       line.description,
       line.quantity.to_s,
-      money(line.unit_price),
+      price(line.unit_price),
       money(line.net_amount),
       "#{line.vat_rate_percent}%"
     ]
