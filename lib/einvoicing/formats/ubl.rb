@@ -278,17 +278,18 @@ module Einvoicing
 
       # Unit prices (BT-146) are not amounts: EN 16931 holds amounts to two
       # decimals but sets no such limit on prices, and a sub-cent price written
-      # as 0.01 contradicts its own line total. Keep up to seven decimals, drop
-      # trailing zeros, never write fewer than two.
+      # as 0.01 contradicts its own line total. Keep every decimal the price
+      # carries, never write fewer than two.
       def self.format_price(value)
-        whole, fraction = BigDecimal(value.to_s).round(7, :half_up).to_s("F").split(".")
-        "#{whole}.#{fraction.sub(/0+\z/, "").ljust(2, "0")}"
+        whole, fraction = BigDecimal(value.to_s).to_s("F").split(".")
+        "#{whole}.#{fraction.ljust(2, "0")}"
       end
       private_class_method :format_price
 
+      # Every decimal of the quantity (BT-129), like the price: the line total
+      # is computed from both, and must stay their product once serialized.
       def self.format_quantity(value)
-        v = value.to_f
-        v % 1 == 0 ? v.to_i.to_s : format("%.4f", v)
+        BigDecimal(value.to_s).to_s("F").delete_suffix(".0")
       end
       private_class_method :format_quantity
     end

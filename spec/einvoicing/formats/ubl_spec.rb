@@ -344,8 +344,17 @@ RSpec.describe Einvoicing::Formats::UBL do
       expect(price_amount(price_line(BigDecimal("14.5")))).to eq("14.50")
     end
 
-    it "rounds beyond seven decimals" do
-      expect(price_amount(price_line(BigDecimal("0.123456789")))).to eq("0.1234568")
+    it "keeps every decimal of the price" do
+      expect(price_amount(price_line(BigDecimal("1.000000051")))).to eq("1.000000051")
+    end
+
+    # BT-129 is the other operand of the line total: rounding it would break
+    # the product as surely as rounding the price
+    it "keeps every decimal of the quantity" do
+      xml = price_line(BigDecimal("833.42574"), quantity: BigDecimal("8.915839"))
+
+      expect(xml).to include('<cbc:InvoicedQuantity unitCode="C62">8.915839</cbc:InvoicedQuantity>')
+      expect(price_line(BigDecimal("1"), quantity: 5)).to include('<cbc:InvoicedQuantity unitCode="C62">5</cbc:InvoicedQuantity>')
     end
 
     it "keeps every amount at two decimals" do
