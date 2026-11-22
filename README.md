@@ -386,7 +386,7 @@ Common `payment_means_code` values (UNCL4461):
 
 ## Requirements
 
-- **Ruby >= 3.2** (uses `Data.define`)
+- **Ruby >= 3.3** (uses `Data.define`)
 - **hexapdf ~> 1.0** (runtime, for Factur-X PDF/A-3 embedding)
 - **Java** (optional) — for local validation with the Mustang CLI validator
 

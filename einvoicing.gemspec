@@ -21,7 +21,7 @@ Gem::Specification.new do |s|
   }
   s.license  = "MIT"
 
-  s.required_ruby_version = ">= 3.2"
+  s.required_ruby_version = ">= 3.3"
 
   s.files = Dir["lib/**/*.rb", "lib/**/*.icc", "lib/**/*.xslt", "config/locales/*.yml",
                 "README.md", "CHANGELOG.md", "LICENSE"]

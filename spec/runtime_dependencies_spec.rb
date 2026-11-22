@@ -20,7 +20,7 @@ require "ripper"
 RSpec.describe "runtime dependencies" do
   # Libraries that are still part of Ruby itself on every supported version.
   # Checked by loading each one inside a bundle whose lock contains none of
-  # them, on the floor Ruby (3.2) and on the current release.
+  # them, on the floor Ruby (3.3) and on the current release.
   #
   # A default gem can be demoted to a bundled gem in a later Ruby — that is what
   # happened to base64 in 3.4. When it does, the entry moves out of this list
