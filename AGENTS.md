@@ -55,7 +55,7 @@ Bundled XSD files for Factur-X profiles (BASIC, EN16931, EXTENDED, etc.), `srgb.
 Shared fixtures are defined in `spec/spec_helper.rb` as `Fixtures.seller`, `Fixtures.buyer`, `Fixtures.line`, `Fixtures.invoice`. Seller uses La Poste SIREN (356000000, valid Luhn); buyer uses Renault SIREN (552032534).
 
 ## Key Constraints
-- Ruby >= 3.2 required (`Data.define`)
+- Ruby >= 3.3 required (`Data.define`)
 - Only one runtime dependency: `hexapdf ~> 1.0`
 - Peppol validation requires Java 21 + Saxon-HE 12 JAR (downloaded by CI)
 - Use `BigDecimal` for all financial values — never `Float`

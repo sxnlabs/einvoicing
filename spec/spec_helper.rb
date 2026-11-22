@@ -17,7 +17,7 @@ SimpleCov.start do
   #
   # And in CI only on the leg that sets COVERAGE_GATE. The branch table the
   # Coverage module produces is not identical across Ruby versions, and with
-  # four branches of headroom the 3.2 leg could drop under the floor without a
+  # four branches of headroom the 3.3 leg could drop under the floor without a
   # line of code changing.
   # Any argument at all means a partial run: a file, an absolute path from an
   # editor, `-e "example name"`, `-t @tag`. Testing for a "spec/" prefix missed
